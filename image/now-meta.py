@@ -8,6 +8,7 @@ Soloist's playback_state JSON (observed with Soloist 1.3.x):
        "identity": {"name": TITLE},
        "creators": [{"entity": {"decorations": {"identity": {"name": ARTIST}}}}, ...],
        "parent":   {"entity": {"entity_type": "album", "decorations": {"identity": {"name": ALBUM}}}},
+                     (podcast episode: item.entity_type "episode", parent entity_type "" = the show, no creators)
        "visual_identity": {"cover": [{"url": URL, "size": "small|default|large|xlarge"}, ...]}}}}
 Cover URLs (i.scdn.co) are rewritten to plain http - legacy receivers may not handle modern TLS,
 and Spotify's image CDN serves the same files over http.
@@ -70,7 +71,16 @@ def known_layout(data):
     creators = deco.get("creators") or []
     artist = ", ".join(n for n in (names(dig(c, "entity") or c) for c in creators) if n)
     parent = dig(deco, "parent", "entity") or {}
-    album = names(parent.get("decorations") or "") if parent.get("entity_type") in ("album", None) else ""
+    ptype = parent.get("entity_type")
+    pname = names(parent.get("decorations") or "")
+    if ptype in ("album", None):
+        album = pname
+    else:
+        # podcast episode: the parent is the show (entity_type "" or "show") - no album, no creators;
+        # show the podcast name in the artist line
+        album = ""
+        if not artist:
+            artist = pname or names(dig(data, "context", "decorations") or "")
     return title, artist, album
 
 

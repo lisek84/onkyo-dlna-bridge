@@ -77,7 +77,7 @@ second life too.
                                     receiver control: UPnP AVTransport + eISCP (TCP 60128) ┘
 ```
 
-Details: [docs/how-it-works.md](docs/how-it-works.md).
+Details: [docs/how-it-works.md](docs/how-it-works.md). Technical reference of the receiver for developers: [docs/receiver-internals.md](docs/receiver-internals.md).
 
 ## Features
 
@@ -163,11 +163,25 @@ All settings live in `soloist.env` (see [soloist.env.example](soloist.env.exampl
 | `NET_RESUME_SECONDS` | `120` | How long after Stop the NET button resumes (NET also opens the NET menu) |
 | `VOLUME_SYNC` | `no` | Spotify volume slider ↔ receiver master volume, both ways |
 | `VOLUME_MAX` | `50` | Receiver volume at 100 % in Spotify (hard limit) |
-| `POWER_ON_VOLUME` | *(keep)* | Receiver volume set only when the container switches it on |
+| `POWER_ON_VOLUME` | *(empty)* | Receiver volume set only when the container switches it on. **Empty = the receiver starts at its usual volume, as it always did** |
 | `RESTORE_INPUT` | `no` | Switch back to the previous input (e.g. TV) when Spotify is done |
 | `AUTO_POWER_OFF_MINUTES` | `0` | Standby after N minutes without Spotify, if the container switched the receiver on |
 | `IDLE_STOP_SECONDS` | `300` | Stop streaming after this long paused |
 | `LOG_TO_FILE` | `yes` | Also log to `config/container.log` |
+
+**Volume options are independent of each other:**
+
+| You want | Settings |
+|---|---|
+| Leave the receiver's volume alone; the Spotify slider changes only the stream level (default) | `VOLUME_SYNC=no`, `POWER_ON_VOLUME=` |
+| Spotify slider controls the receiver, no start-up volume | `VOLUME_SYNC=yes`, `POWER_ON_VOLUME=` |
+| Only a fixed start-up volume | `VOLUME_SYNC=no`, `POWER_ON_VOLUME=35` |
+| Both | `VOLUME_SYNC=yes`, `POWER_ON_VOLUME=35` |
+
+With `POWER_ON_VOLUME` empty (or the line removed) the receiver switches on at whatever volume it had last – the
+container never changes it. A receiver that is already on is never changed either. With `VOLUME_SYNC=yes` the
+Spotify slider is aligned to the receiver's current volume when playback starts – only the slider moves, the
+receiver keeps its volume.
 
 ## Using it
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.2
+
+- Fix: for items without an album (podcast episodes) the receiver showed the cover URL as the album – the Onkyo DMR
+  takes `<upnp:albumArtURI>` for the album when `<upnp:album>` is missing. The album element is now always sent
+  (empty if needed), and text that looks like a URL is never sent as display text.
+- Podcast episodes: the show name is shown in the artist line (Soloist reports no creators, "N/A").
+
 ## 1.4.1
 
 - Fix: `VOLUME_SYNC` forced Soloist's PulseAudio stream to 100 %, which is the Spotify volume itself – the slider

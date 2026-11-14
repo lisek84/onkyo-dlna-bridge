@@ -79,7 +79,7 @@ Jeśli masz stary amplituner, którego funkcje streamingowe zostały porzucone w
                                           sterowanie amplitunerem: UPnP AVTransport + eISCP (TCP 60128) ┘
 ```
 
-Szczegóły (po angielsku): [docs/how-it-works.md](docs/how-it-works.md).
+Szczegóły (po angielsku): [docs/how-it-works.md](docs/how-it-works.md). Dokumentacja techniczna amplitunera dla deweloperów: [docs/receiver-internals.md](docs/receiver-internals.md).
 
 ## Funkcje
 
@@ -239,11 +239,25 @@ Wszystkie ustawienia są w `soloist.env` (pełne komentarze w [soloist.env.examp
 | `NET_RESUME_SECONDS` | `120` | Jak długo po Stop przycisk NET wznawia odtwarzanie (NET otwiera też menu NET) |
 | `VOLUME_SYNC` | `no` | Suwak głośności w Spotify ↔ głośność amplitunera, w obie strony |
 | `VOLUME_MAX` | `50` | Głośność amplitunera odpowiadająca 100 % w Spotify (twardy limit) |
-| `POWER_ON_VOLUME` | *(bez zmian)* | Głośność ustawiana tylko wtedy, gdy to kontener włącza amplituner |
+| `POWER_ON_VOLUME` | *(puste)* | Głośność ustawiana tylko wtedy, gdy to kontener włącza amplituner. **Puste = amplituner włącza się z taką głośnością, jaką zawsze miał** |
 | `RESTORE_INPUT` | `no` | Powrót do poprzedniego wejścia (np. TV), gdy Spotify skończy |
 | `AUTO_POWER_OFF_MINUTES` | `0` | Standby po N minutach bez Spotify, jeśli to kontener włączył amplituner |
 | `IDLE_STOP_SECONDS` | `300` | Zatrzymaj strumień po tylu sekundach pauzy |
 | `LOG_TO_FILE` | `yes` | Zapisuj log także do `config/container.log` |
+
+**Opcje głośności działają niezależnie od siebie:**
+
+| Chcesz | Ustawienia |
+|---|---|
+| Nie ruszać głośności amplitunera; suwak w Spotify zmienia tylko poziom strumienia (domyślnie) | `VOLUME_SYNC=no`, `POWER_ON_VOLUME=` |
+| Suwak w Spotify steruje amplitunerem, bez głośności startowej | `VOLUME_SYNC=yes`, `POWER_ON_VOLUME=` |
+| Tylko stała głośność startowa | `VOLUME_SYNC=no`, `POWER_ON_VOLUME=35` |
+| Oba | `VOLUME_SYNC=yes`, `POWER_ON_VOLUME=35` |
+
+Gdy `POWER_ON_VOLUME` jest puste (albo linii nie ma), amplituner włącza się z taką głośnością, jaką miał ostatnio –
+kontener jej nie zmienia. Włączonego już amplitunera kontener też nigdy nie rusza. Przy `VOLUME_SYNC=yes` suwak
+w Spotify na starcie odtwarzania ustawia się według aktualnej głośności amplitunera – przesuwa się tylko suwak,
+amplituner zachowuje swoją głośność.
 
 ## Jak z tego korzystać
 

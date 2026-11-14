@@ -127,6 +127,8 @@ def text(s):
     official Onkyo app has the same issue), so for Onkyo the text is sent raw - the SOAP envelope is still
     escaped as a whole. Standards-compliant renderers (ONKYO_EISCP=no) get properly escaped DIDL."""
     s = "".join(ch for ch in s if ch >= " ")
+    if s.strip().lower().startswith(("http://", "https://")):
+        return ""                                 # a link is useless on the display
     return s if EISCP else html.escape(s)
 
 
@@ -136,7 +138,9 @@ def didl(url, title, artist="", album="", cover=""):
          'xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/"><item id="1" parentID="0" restricted="1">'
          f'<dc:title>{text(title)}</dc:title>'
          + (f'<dc:creator>{text(artist)}</dc:creator><upnp:artist>{text(artist)}</upnp:artist>' if artist else '')
-         + (f'<upnp:album>{text(album)}</upnp:album>' if album else '')
+         # always present, even empty: without it the Onkyo DMR takes <upnp:albumArtURI> (prefix match)
+         # as the album and shows the cover URL as text
+         + f'<upnp:album>{text(album)}</upnp:album>'
          # same form as the official Onkyo Remote app (any JPEG/PNG size is accepted)
          + (f'<upnp:albumArtURI dlna:profileID="JPEG_TN" xmlns:dlna="urn:schemas-dlna-org:metadata-1-0/">'
             f'{html.escape(cover)}</upnp:albumArtURI>' if cover else '')
