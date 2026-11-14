@@ -1,0 +1,24 @@
+# onkyo-spotify-connect - Docker Compose / Podman Compose
+#
+#   cp soloist.env.example soloist.env    # then edit it (API key, receiver IP, ...)
+#   docker compose up -d --build
+#   docker compose logs -f
+#
+# Raspberry Pi / other ARM hosts: set "dockerfile: Dockerfile.arm" below.
+# Synology DSM: use deploy/synology/ instead (see docs/synology.md).
+
+services:
+  onkyo-spotify-connect:
+    build:
+      context: ./image
+      dockerfile: Dockerfile          # Dockerfile.arm on arm64 / armv7 (Raspberry Pi)
+    image: local/onkyo-spotify-connect:latest
+    container_name: onkyo-spotify-connect
+    # Host networking is required: Spotify Connect discovery (mDNS) and the
+    # receiver's DLNA renderer only work on the real LAN interface.
+    network_mode: host
+    env_file:
+      - soloist.env
+    volumes:
+      - ./config:/config
+    restart: unless-stopped

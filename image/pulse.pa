@@ -1,0 +1,7 @@
+# Minimal PulseAudio configuration: a single virtual output "dlna" in Spotify's
+# native format (44.1 kHz / 16 bit / stereo). Its monitor is the default source,
+# which swyh-rs-cli captures and streams to the receiver.
+load-module module-native-protocol-unix
+load-module module-null-sink sink_name=dlna rate=44100 channels=2 format=s16le sink_properties=device.description=DLNA
+set-default-sink dlna
+set-default-source dlna.monitor

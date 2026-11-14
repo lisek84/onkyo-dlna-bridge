@@ -1,0 +1,6 @@
+# secrets and runtime data - never commit
+soloist.env
+config/
+**/config/
+*.log
+__pycache__/
