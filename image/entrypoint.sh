@@ -9,7 +9,7 @@
 #   - maps the receiver remote: Stop -> pause Spotify, NET -> resume, power off -> pause.
 set -euo pipefail
 
-VERSION="1.3.1"
+VERSION="1.4.0"
 
 # ---------------------------------------------------------------- configuration --
 : "${PUID:=1000}"                       # user/group that owns /config
@@ -31,7 +31,15 @@ export COVER_SIZE
 : "${ONKYO_EISCP:=yes}"                 # yes = Onkyo/Integra/Pioneer eISCP control (power, input, remote)
 : "${AUTO_POWER_ON:=yes}"               # yes = power the receiver on when Spotify starts playing
 : "${REMOTE_CONTROL:=yes}"              # yes = remote Stop pauses Spotify, NET resumes, power off pauses
-: "${NET_RESUME_SECONDS:=1800}"         # how long after a remote Stop the NET button resumes playback
+: "${NET_RESUME_SECONDS:=120}"          # how long after a remote Stop the NET button resumes playback
+# --- optional receiver integration (all off by default) ---
+: "${VOLUME_SYNC:=no}"                  # yes = Spotify volume slider <-> receiver master volume (both ways)
+: "${VOLUME_MAX:=50}"                   # receiver volume at 100 % in Spotify (hard limit for the slider)
+: "${POWER_ON_VOLUME:=}"                # receiver volume set when THE CONTAINER switches it on (empty = keep)
+: "${RESTORE_INPUT:=no}"                # yes = switch back to the previous input when Spotify is done
+: "${AUTO_POWER_OFF_MINUTES:=0}"        # >0 = standby after N minutes without Spotify, if the container
+                                        #      switched the receiver on and it is still idle on NET
+export POWER_ON_VOLUME RESTORE_INPUT
 : "${IDLE_STOP_SECONDS:=300}"           # stop streaming after this long paused
 : "${AMP_MAX_TRIES:=3}"                 # start attempts per playback session
 : "${LOG_TO_FILE:=yes}"                 # yes = also write /config/container.log (rotated at 5 MB)
@@ -216,16 +224,42 @@ swyh_stop() {
 
 sctl() { as_user "$SOLOIST" ctl -D "$DATA" "$@" >/dev/null 2>&1; }
 
+# VOLUME_SYNC: keep the PulseAudio stream at 100 % - the receiver does the attenuation.
+# (If Soloist scales the samples itself instead of using the PulseAudio stream volume, the
+#  stream level still follows the slider; the log shows the stream volume once for diagnosis.)
+PA_LOGGED=""
+pa_full() {
+  local id
+  if [ -z "$PA_LOGGED" ]; then
+    log "PulseAudio stream volume before sync: $(as_user pactl list sink-inputs 2>/dev/null | grep -m1 -E '^[[:space:]]*Volume:' | tr -s ' ')"
+    PA_LOGGED=1
+  fi
+  for id in $(as_user pactl list short sink-inputs 2>/dev/null | awk '{print $1}'); do
+    as_user pactl set-sink-input-volume "$id" 100% >/dev/null 2>&1
+  done
+}
+
+# AUTO_POWER_OFF_MINUTES: standby after N minutes without Spotify (amp-ctl checks that the
+# container switched the receiver on and that it is still idle on the NET input).
+check_auto_off() {
+  if [ "${AUTO_POWER_OFF_MINUTES:-0}" -gt 0 ] && [ "$quiet_since" -gt 0 ] \
+     && [ $(( $(date +%s) - quiet_since )) -ge $(( AUTO_POWER_OFF_MINUTES * 60 )) ]; then
+    amp auto-off
+    quiet_since=-1                       # once per quiet period
+  fi
+}
+
 # ------------------------------------------------------------------- watcher --
 watcher() {
   set +e
   local status last="" idle_since now next_amp=0 tries=0 st ast ours json title artist album cover
   local meta="" shown="" amp_prev="" user_stop=0 stop_ts=0 net_ts play_seen=0
   local off_ts off_seen=0 off_hold=0 net_used=0 eof_ts play_ts active was_active=0
+  local svol sv_last="" amp_expect="" mvl_seen=0 mts mval v m quiet_since=0
   idle_since=$(date +%s)
   while kill -0 "$SOLOIST_PID" 2>/dev/null; do
     json=$(as_user "$SOLOIST" ctl -D "$DATA" now --json 2>/dev/null)
-    IFS=$'\x1f' read -r status title artist album cover < <(printf '%s' "$json" | python3 /usr/local/bin/now-meta.py)
+    IFS=$'\x1f' read -r status title artist album cover svol < <(printf '%s' "$json" | python3 /usr/local/bin/now-meta.py)
     status=${status:-idle}
     [ "$META_UPDATE" = "yes" ] || { title=""; artist=""; album=""; cover=""; }
 
@@ -236,9 +270,12 @@ watcher() {
         log "Spotify moved to another device -> releasing the receiver"
         swyh_running && amp stop "$STREAM_URL"
         swyh_stop
-        user_stop=0; off_hold=0; amp_prev=""; last=""
+        amp release                      # RESTORE_INPUT: back to the input used before Spotify
+        user_stop=0; off_hold=0; amp_prev=""; last=""; sv_last=""
         was_active=0
       fi
+      [ "$quiet_since" = 0 ] && quiet_since=$(date +%s)
+      check_auto_off
       # receiver events while another device is active must not fire later on re-activation
       off_seen=$(cut -d. -f1 /tmp/iscp-off 2>/dev/null || echo 0); off_seen=${off_seen:-0}
       net_used=$(cut -d. -f1 /tmp/iscp-net 2>/dev/null || echo 0); net_used=${net_used:-0}
@@ -259,6 +296,11 @@ watcher() {
       last=$status
     fi
     now=$(date +%s)
+    case "$status" in
+      playing|buffering) quiet_since=0 ;;
+      *) [ "$quiet_since" = 0 ] && quiet_since=$now ;;
+    esac
+    check_auto_off
 
     # --- receiver switched off by the user -> pause Spotify, never power it back on ---
     if [ -f /tmp/iscp-off ]; then
@@ -324,6 +366,40 @@ watcher() {
       fi
     fi
 
+    # --- volume sync: Spotify slider <-> receiver master volume (VOLUME_SYNC=yes) ---
+    if [ "$VOLUME_SYNC" = "yes" ] && [ "$ONKYO_EISCP" = "yes" ] && [ "$ast" = "PLAYING OK" ] && [ -n "$svol" ]; then
+      if [ -z "$sv_last" ]; then
+        # session start: the receiver's current volume wins, Spotify's slider follows it
+        mvl_seen=$(cut -d. -f1 /tmp/iscp-mvl 2>/dev/null || echo 0); mvl_seen=${mvl_seen:-0}
+        m=$(amp getvol 2>/dev/null)
+        if [ -n "$m" ]; then
+          v=$(( (m * 100 + VOLUME_MAX / 2) / VOLUME_MAX )); [ "$v" -gt 100 ] && v=100
+          sctl volume "$v"; sv_last=$v; amp_expect=$m
+          log "volume sync: receiver $m -> Spotify $v %"
+          pa_full
+        fi
+      elif [ "$svol" != "$sv_last" ]; then
+        m=$(( (svol * VOLUME_MAX + 50) / 100 ))
+        amp volume "$m"; amp_expect=$m; sv_last=$svol
+        log "volume sync: Spotify $svol % -> receiver $m"
+        pa_full
+      fi
+      if [ -f /tmp/iscp-mvl ]; then
+        read -r mts mval < /tmp/iscp-mvl; mts=${mts%%.*}
+        if [ -n "$mval" ] && [ "${mts:-0}" -gt "$mvl_seen" ]; then
+          mvl_seen=$mts
+          if [ "$mval" != "$amp_expect" ]; then          # changed on the receiver (remote / knob)
+            amp_expect=$mval
+            v=$(( (mval * 100 + VOLUME_MAX / 2) / VOLUME_MAX )); [ "$v" -gt 100 ] && v=100
+            if [ "$v" != "$sv_last" ]; then
+              sctl volume "$v"; sv_last=$v
+              log "volume sync: receiver $mval -> Spotify $v %"
+            fi
+          fi
+        fi
+      fi
+    fi
+
     case "$status" in
       playing|buffering)
         idle_since=$now
@@ -361,6 +437,8 @@ watcher() {
         if swyh_running && [ $((now - idle_since)) -ge "$IDLE_STOP_SECONDS" ]; then
           amp stop "$STREAM_URL"
           swyh_stop
+          amp release                    # RESTORE_INPUT: back to the input used before Spotify
+          sv_last=""
         fi ;;
     esac
     sleep 2
@@ -371,6 +449,7 @@ WATCH_PID=$!
 
 log "started: pulseaudio=$PA_PID soloist=$SOLOIST_PID proxy=$PROXY_PID eiscp=${ISCP_PID:-off} watcher=$WATCH_PID"
 log "receiver=$RENDERER_IP host=$HOST_IP stream=$STREAM_URL eiscp=$ONKYO_EISCP auto_power_on=$AUTO_POWER_ON remote=$REMOTE_CONTROL metadata=$META_UPDATE cover=$COVER_ART/$COVER_SIZE stream_allow=${STREAM_ALLOW:-anyone}"
+log "net_resume=${NET_RESUME_SECONDS}s volume_sync=$VOLUME_SYNC(max $VOLUME_MAX) power_on_volume=${POWER_ON_VOLUME:-keep} restore_input=$RESTORE_INPUT auto_power_off=${AUTO_POWER_OFF_MINUTES}min"
 
 # If PulseAudio, Soloist or the proxy exits, exit too and let the restart policy restart
 # the container (this also fetches a fresh Soloist build after expiry, exit code 10).

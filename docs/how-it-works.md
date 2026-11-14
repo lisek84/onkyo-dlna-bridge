@@ -92,6 +92,22 @@ instead of being treated as Stop. Spotify sometimes resumes by itself right afte
 watcher pauses it again within 6 s after Stop / 15 s after power-off. If the receiver starts playing another
 source (e.g. internet radio) after a Stop, NET no longer resumes Spotify.
 
+## Optional receiver integration
+
+All off by default; they use the same eISCP commands as the official Onkyo Remote app.
+
+- **`VOLUME_SYNC`** – at the start of a playback session the Spotify slider is set from the receiver's current
+  volume; afterwards moving the slider sends `MVLxx` to the receiver (100 % = `VOLUME_MAX`), and volume changes
+  made on the receiver (remote, knob – reported as `MVL` events) move the slider. Echoes of our own changes are
+  ignored. The PulseAudio stream is kept at 100 % so the receiver does the attenuation.
+- **`POWER_ON_VOLUME`** – applied only right after the container switched the receiver on from standby.
+- **`RESTORE_INPUT`** – before switching to NET the container remembers the input in use (e.g. `SLI01`); when
+  Spotify is done (paused for `IDLE_STOP_SECONDS` or moved to another device) and the receiver is still idle on
+  NET, it switches back.
+- **`AUTO_POWER_OFF_MINUTES`** – only if the receiver was in standby when Spotify started (i.e. the container
+  switched it on): after N minutes without Spotify, if it is still idle on NET (no internet radio etc.), it is
+  put back into standby. If the user switches it off or uses another input meanwhile, nothing happens.
+
 ## Files in `config/`
 
 | Path | Content |

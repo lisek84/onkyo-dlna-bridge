@@ -6,6 +6,9 @@
                                         -> prepare, Stop, SetAVTransportURI, Play (exit 0 = playing)
   amp-ctl.py stop [PREFIX]              -> Stop (only if the current URI starts with PREFIX)
   amp-ctl.py power                      -> power on via eISCP if in standby, wait for the DMR
+  amp-ctl.py volume N / getvol          -> set / read the receiver master volume (MVL, decimal steps)
+  amp-ctl.py release                    -> RESTORE_INPUT=yes: switch back to the input used before Spotify
+  amp-ctl.py auto-off                   -> standby, if the container powered the receiver on and it is idle on NET
 
 Environment: RENDERER_IP (required), ONKYO_EISCP=yes|no, AUTO_POWER_ON=yes|no,
              DMR_DESCRIPTION_URL (optional, skips discovery).
@@ -25,6 +28,8 @@ EISCP = os.environ.get("ONKYO_EISCP", "yes") == "yes"
 AVT = "urn:schemas-upnp-org:service:AVTransport:1"
 TIMEOUT = 6
 CACHE = f"/tmp/amp-ctl.{IP}.avt-url"   # discovered AVTransport control URL
+# Receiver state before Spotify took it over: "off" (we powered it on), "SLIxx" (another input) or "none".
+PREV = "/tmp/amp-prev"
 
 
 def log(msg):
@@ -172,7 +177,14 @@ def power():
     if "PWR01" in r:
         return True
     log("receiver in standby -> PWR01")
+    remember("off")
     iscp(["PWR01"], wait=0.5)
+    vol = os.environ.get("POWER_ON_VOLUME", "").strip()
+    if vol.isdigit():
+        # only when WE switched it on - a receiver someone already uses keeps its volume
+        time.sleep(2)
+        set_volume(int(vol))
+        log(f"power-on volume -> {vol}")
     ctrl = avt_url()
     for _ in range(20):
         time.sleep(2)
@@ -180,6 +192,59 @@ def power():
             return True
     log("DMR not responding after power on")
     return False
+
+
+def remember(prev):
+    """Store the state before Spotify took the receiver over - only once per takeover."""
+    if not os.path.exists(PREV):
+        with open(PREV, "w") as f:
+            f.write(prev)
+
+
+def set_volume(level):
+    level = max(0, min(int(level), 100))
+    iscp([f"MVL{level:02X}"], wait=0.3)
+
+
+def get_volume():
+    r = iscp(["MVLQSTN"], until=lambda m: any(x.startswith("MVL") for x in m))
+    for m in r:
+        if m.startswith("MVL") and len(m) >= 5:
+            try:
+                return int(m[3:5], 16)
+            except ValueError:
+                pass
+    return None
+
+
+def idle_on_net():
+    """Receiver on, on the NET input, and not playing anything (e.g. no internet radio)."""
+    want = lambda m: all(any(x.startswith(k) for x in m) for k in ("PWR", "SLI", "NST"))
+    r = iscp(["PWRQSTN", "SLIQSTN", "NSTQSTN"], until=want)
+    playing = any(x.startswith("NSTP") for x in r)
+    return "PWR01" in r and "SLI2B" in r and not playing
+
+
+def release():
+    """Spotify is done with the receiver: switch back to the previous input (RESTORE_INPUT=yes)."""
+    if not EISCP or not os.path.exists(PREV):
+        return
+    prev = open(PREV).read().strip()
+    if prev.startswith("SLI") and os.environ.get("RESTORE_INPUT", "no") == "yes":
+        if idle_on_net():
+            log(f"restoring the previous input ({prev})")
+            iscp([prev], wait=0.5)
+        os.remove(PREV)
+
+
+def auto_off():
+    """Standby after AUTO_POWER_OFF_MINUTES - only if the container powered the receiver on."""
+    if not EISCP or not os.path.exists(PREV) or open(PREV).read().strip() != "off":
+        return
+    if idle_on_net():
+        log("receiver idle since Spotify stopped -> standby (PWR00)")
+        iscp(["PWR00"], wait=0.5)
+    os.remove(PREV)
 
 
 def prepare():
@@ -198,6 +263,8 @@ def prepare():
             if not power():
                 return False
             r = iscp(["SLIQSTN"], until=lambda m: any(x.startswith("SLI") for x in m))
+        sli = next((x[:5] for x in r if x.startswith("SLI")), "")
+        remember(sli if sli and sli != "SLI2B" else "none")
         if "SLI2B" not in r:
             log("input -> NET (SLI2B)")
             # wait for the NET menu (NLTF3...), then let it settle, otherwise NSV000 may be ignored
@@ -245,6 +312,22 @@ def main():
     cmd = sys.argv[1] if len(sys.argv) > 1 else "state"
     if cmd == "power":
         sys.exit(0 if power() else 1)
+    if cmd in ("volume", "getvol", "release", "auto-off"):
+        if not EISCP:
+            sys.exit(0)
+        try:
+            if cmd == "volume":
+                set_volume(int(sys.argv[2]))
+            elif cmd == "getvol":
+                v = get_volume()
+                print(v if v is not None else "")
+            elif cmd == "release":
+                release()
+            else:
+                auto_off()
+        except (OSError, ValueError, IndexError) as e:
+            log(f"{cmd} failed: {e}")
+        sys.exit(0)
     ctrl = avt_url()
     if cmd == "state":
         st = state(ctrl)

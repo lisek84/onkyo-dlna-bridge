@@ -236,7 +236,12 @@ Wszystkie ustawienia są w `soloist.env` (pełne komentarze w [soloist.env.examp
 | `ONKYO_EISCP` | `yes` | Używaj protokołu Onkyo eISCP; `no` dla odtwarzaczy innych niż Onkyo |
 | `AUTO_POWER_ON` | `yes` | Włączaj amplituner, gdy zaczyna się odtwarzanie |
 | `REMOTE_CONTROL` | `yes` | Pilot: Stop → pauza, NET → wznowienie, wyłączenie → pauza |
-| `NET_RESUME_SECONDS` | `1800` | Jak długo po Stop przycisk NET wznawia odtwarzanie |
+| `NET_RESUME_SECONDS` | `120` | Jak długo po Stop przycisk NET wznawia odtwarzanie (NET otwiera też menu NET) |
+| `VOLUME_SYNC` | `no` | Suwak głośności w Spotify ↔ głośność amplitunera, w obie strony |
+| `VOLUME_MAX` | `50` | Głośność amplitunera odpowiadająca 100 % w Spotify (twardy limit) |
+| `POWER_ON_VOLUME` | *(bez zmian)* | Głośność ustawiana tylko wtedy, gdy to kontener włącza amplituner |
+| `RESTORE_INPUT` | `no` | Powrót do poprzedniego wejścia (np. TV), gdy Spotify skończy |
+| `AUTO_POWER_OFF_MINUTES` | `0` | Standby po N minutach bez Spotify, jeśli to kontener włączył amplituner |
 | `IDLE_STOP_SECONDS` | `300` | Zatrzymaj strumień po tylu sekundach pauzy |
 | `LOG_TO_FILE` | `yes` | Zapisuj log także do `config/container.log` |
 
@@ -247,9 +252,9 @@ Wszystkie ustawienia są w `soloist.env` (pełne komentarze w [soloist.env.examp
 | Wybierasz urządzenie w Spotify i włączasz odtwarzanie | Amplituner włącza się, przechodzi na NET → DLNA i gra (≈ 8–15 s) |
 | Zmieniasz utwór w aplikacji Spotify | Gra dalej; wyświetlacz pokazuje nowy tytuł i okładkę (`META_UPDATE=yes`) |
 | **Stop** na pilocie amplitunera | Spotify się pauzuje |
-| **NET** na pilocie po Stop | Spotify wznawia odtwarzanie (≈ 8 s do dźwięku) |
+| **NET** na pilocie do 2 min po Stop | Spotify wznawia odtwarzanie (≈ 8 s do dźwięku) |
 | Wyłączasz amplituner | Spotify się pauzuje; amplituner **nie** zostanie z powrotem włączony |
-| Głośność na pilocie / w Spotify | Pilot = głośność amplitunera; suwak w Spotify = cyfrowa głośność strumienia |
+| Głośność na pilocie / w Spotify | Pilot = głośność amplitunera; suwak w Spotify = głośność strumienia, albo głośność amplitunera przy `VOLUME_SYNC=yes` |
 
 **Niemożliwe:** Play/Pause/Next/Previous/FF na pilocie amplitunera. W trybie odtwarzacza DLNA te amplitunery
 obsługują te przyciski wewnętrznie i nie zgłaszają ich w sieci (sprawdzone przez eISCP i UPnP). Do

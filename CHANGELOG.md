@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.0
+
+- Optional receiver integration (all off by default, eISCP):
+  - `VOLUME_SYNC` + `VOLUME_MAX`: Spotify volume slider <-> receiver master volume, both ways, with a hard limit.
+  - `POWER_ON_VOLUME`: volume set only when the container switches the receiver on.
+  - `RESTORE_INPUT`: back to the previous input (e.g. TV) when Spotify is done.
+  - `AUTO_POWER_OFF_MINUTES`: standby after N minutes without Spotify, if the container switched the receiver on.
+- `NET_RESUME_SECONDS` default lowered to 120 s: the NET button also opens the NET menu, so a later visit to the
+  menu no longer resumes Spotify.
+
 ## 1.3.1
 
 - Fix (important): after moving Spotify playback to another device (e.g. the phone), the receiver's remote

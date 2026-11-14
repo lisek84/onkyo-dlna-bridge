@@ -5,6 +5,7 @@ Logs relevant events and writes marker files read by the watcher in entrypoint.s
   /tmp/iscp-net  - time of the last NET button press (SLI2B, or NLTF3... = NET top menu)
   /tmp/iscp-off  - time of the last power-off transition (PWR01 -> PWR00)
   /tmp/iscp-play - time of the last "network playback started" status (NSTP), any source
+  /tmp/iscp-mvl  - "<time> <volume>" of the last master volume report (MVLxx, also from the remote)
 In DLNA renderer mode the receiver reports only these; Play/Pause/Next/FF on the
 remote are handled internally and are not reported over the network.
 """
@@ -17,6 +18,8 @@ IP = os.environ["RENDERER_IP"]
 NET_FLAG = os.environ.get("ISCP_NET_FLAG", "/tmp/iscp-net")
 OFF_FLAG = os.environ.get("ISCP_OFF_FLAG", "/tmp/iscp-off")
 PLAY_FLAG = os.environ.get("ISCP_PLAY_FLAG", "/tmp/iscp-play")
+MVL_FILE = os.environ.get("ISCP_MVL_FILE", "/tmp/iscp-mvl")
+PREV_FILE = "/tmp/amp-prev"     # see amp-ctl.py
 LOG_PREFIXES = ("PWR", "SLI", "NST", "NLTF3")
 power = None   # last known power state (answers to PWRQSTN also arrive as PWR..)
 selector = None   # last known input (SLI..); answers to SLIQSTN from any client are broadcast too
@@ -44,6 +47,10 @@ def handle(msg):
         if power == "PWR01" and msg == "PWR00":
             log("receiver switched off (PWR01 -> PWR00)")
             mark(OFF_FLAG)
+            try:                # nothing to restore any more
+                os.remove(PREV_FILE)
+            except OSError:
+                pass
         power = msg
     if msg.startswith(LOG_PREFIXES):
         log(msg[:40])
@@ -57,6 +64,13 @@ def handle(msg):
         mark(NET_FLAG)
     elif msg.startswith("NSTP"):        # something started playing (ours or another NET source)
         mark(PLAY_FLAG)
+    elif msg.startswith("MVL") and len(msg) >= 5:
+        try:
+            level = int(msg[3:5], 16)
+        except ValueError:
+            return
+        with open(MVL_FILE, "w") as f:
+            f.write(f"{time.time()} {level}")
 
 
 def run():

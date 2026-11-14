@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read `soloist ctl now --json` from stdin and print: status, title, artist, album, cover URL
+"""Read `soloist ctl now --json` from stdin and print: status, title, artist, album, cover URL, volume
 separated by 0x1F (unit separator).
 
 Soloist's playback_state JSON (observed with Soloist 1.3.x):
@@ -91,7 +91,7 @@ def main():
     try:
         data = json.loads(sys.stdin.read())
     except ValueError:
-        print(SEP.join(["idle", "", "", "", ""]))
+        print(SEP.join(["idle", "", "", "", "", ""]))
         return
     objs = list(walk(data))
     status = next((o["status"].lower() for o in objs if isinstance(o.get("status"), str)), "idle")
@@ -103,7 +103,9 @@ def main():
                              "show", "show_name", "publisher", "subtitle")),
                first(track, ("album_name", "album_title", "album")))
     clean = lambda s: " ".join(s.split())[:120]
-    print(SEP.join([status] + [clean(x) for x in res] + [cover_url(data)]))
+    vol = data.get("volume") if isinstance(data, dict) else None
+    vol = str(int(vol)) if isinstance(vol, (int, float)) else ""
+    print(SEP.join([status] + [clean(x) for x in res] + [cover_url(data), vol]))
 
 
 if __name__ == "__main__":

@@ -160,7 +160,12 @@ All settings live in `soloist.env` (see [soloist.env.example](soloist.env.exampl
 | `ONKYO_EISCP` | `yes` | Use the Onkyo eISCP protocol; `no` for non-Onkyo renderers |
 | `AUTO_POWER_ON` | `yes` | Power the receiver on when playback starts |
 | `REMOTE_CONTROL` | `yes` | Remote Stop → pause, NET → resume, power off → pause |
-| `NET_RESUME_SECONDS` | `1800` | How long after Stop the NET button resumes |
+| `NET_RESUME_SECONDS` | `120` | How long after Stop the NET button resumes (NET also opens the NET menu) |
+| `VOLUME_SYNC` | `no` | Spotify volume slider ↔ receiver master volume, both ways |
+| `VOLUME_MAX` | `50` | Receiver volume at 100 % in Spotify (hard limit) |
+| `POWER_ON_VOLUME` | *(keep)* | Receiver volume set only when the container switches it on |
+| `RESTORE_INPUT` | `no` | Switch back to the previous input (e.g. TV) when Spotify is done |
+| `AUTO_POWER_OFF_MINUTES` | `0` | Standby after N minutes without Spotify, if the container switched the receiver on |
 | `IDLE_STOP_SECONDS` | `300` | Stop streaming after this long paused |
 | `LOG_TO_FILE` | `yes` | Also log to `config/container.log` |
 
@@ -171,9 +176,9 @@ All settings live in `soloist.env` (see [soloist.env.example](soloist.env.exampl
 | Select the device in Spotify and press play | Receiver powers on, switches to NET → DLNA, plays (≈ 8–15 s) |
 | Skip / next track in the Spotify app | Plays on; the display shows the new title (`META_UPDATE=yes`) |
 | **Stop** on the receiver remote | Spotify pauses |
-| **NET** on the remote after Stop | Spotify resumes (≈ 8 s until sound) |
+| **NET** on the remote within 2 min after Stop | Spotify resumes (≈ 8 s until sound) |
 | Switch the receiver off | Spotify pauses; the receiver is **not** switched back on |
-| Volume on the remote / in Spotify | Remote = amplifier volume; Spotify slider = digital volume of the stream |
+| Volume on the remote / in Spotify | Remote = amplifier volume; Spotify slider = stream volume, or the amplifier volume with `VOLUME_SYNC=yes` |
 
 **Not possible:** Play/Pause/Next/Previous/FF on the receiver remote. In DLNA renderer mode these receivers
 handle those keys internally and do not report them over the network (verified with eISCP and UPnP).
