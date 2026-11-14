@@ -30,6 +30,13 @@ Look for `[amp]` lines in the log:
 - Volume in the Spotify app (digital stream volume) is very low.
 - The receiver shows "NET" and a title but no sound for a few seconds: normal startup buffering.
 
+## The title on the receiver's front display scrolls away and is gone for ~2 minutes
+
+A limitation of the receiver firmware in DLNA renderer mode (the official Onkyo Remote app behaves the same):
+it pads the text to 64 characters and scrolls the padding too. It cannot be fixed from outside without
+modifying the firmware. The TV on-screen display shows title, artist, album and cover correctly.
+Details: [how-it-works.md](how-it-works.md#legacy-dmr-quirks-this-project-works-around).
+
 ## Short gaps at the start of every track
 
 Expected with `META_UPDATE=yes` – the receiver only reads title/artist when DLNA playback starts.

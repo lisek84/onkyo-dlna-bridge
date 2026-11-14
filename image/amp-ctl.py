@@ -116,13 +116,22 @@ def state(ctrl):
     return tag(b1, "CurrentTransportState"), tag(b1, "CurrentTransportStatus"), tag(b2, "CurrentURI")
 
 
+def text(s):
+    """Text for a DIDL element. Control characters are dropped (the receiver display shows them as '*').
+    The Onkyo DMR does not decode XML entities inside DIDL-Lite (it would show "&amp;" literally, the
+    official Onkyo app has the same issue), so for Onkyo the text is sent raw - the SOAP envelope is still
+    escaped as a whole. Standards-compliant renderers (ONKYO_EISCP=no) get properly escaped DIDL."""
+    s = "".join(ch for ch in s if ch >= " ")
+    return s if EISCP else html.escape(s)
+
+
 def didl(url, title, artist="", album="", cover=""):
     pi = "http-get:*:audio/L16;rate=44100;channels=2:DLNA.ORG_PN=LPCM;DLNA.ORG_OP=01"
     d = ('<DIDL-Lite xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/" xmlns:dc="http://purl.org/dc/elements/1.1/" '
          'xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/"><item id="1" parentID="0" restricted="1">'
-         f'<dc:title>{html.escape(title)}</dc:title>'
-         + (f'<dc:creator>{html.escape(artist)}</dc:creator><upnp:artist>{html.escape(artist)}</upnp:artist>' if artist else '')
-         + (f'<upnp:album>{html.escape(album)}</upnp:album>' if album else '')
+         f'<dc:title>{text(title)}</dc:title>'
+         + (f'<dc:creator>{text(artist)}</dc:creator><upnp:artist>{text(artist)}</upnp:artist>' if artist else '')
+         + (f'<upnp:album>{text(album)}</upnp:album>' if album else '')
          # same form as the official Onkyo Remote app (any JPEG/PNG size is accepted)
          + (f'<upnp:albumArtURI dlna:profileID="JPEG_TN" xmlns:dlna="urn:schemas-dlna-org:metadata-1-0/">'
             f'{html.escape(cover)}</upnp:albumArtURI>' if cover else '')

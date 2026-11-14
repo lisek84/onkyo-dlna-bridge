@@ -44,7 +44,17 @@ Found on an Onkyo TX-NR609 (Mediabolic DMR/IMHTTP 1.8.x, 2011):
    while swyh-rs is not up, it sends real-time silence.
 3. **A dead URL can hang the renderer** (SOAP stops answering, no SSDP) until the receiver is unplugged
    from mains. The proxy design avoids handing the renderer anything that does not answer.
-4. **DMR Max Volume.** A per-receiver volume cap applied at every DLNA start; if set to 0 the volume
+4. **Display text scrolling.** When the receiver is driven as a DLNA renderer, its network module sends
+   title / artist / album to the front display as fixed 64-byte fields padded with NUL bytes (verified on
+   the eISCP bus: `NTI` = text + NULs up to 64 bytes). The display scrolls the whole field, so even a short
+   title slides out and the line stays empty for about 2 minutes before it comes back, then the second line
+   does the same. The receiver's own DLNA player sends exact-length text and does not have this problem; the
+   official Onkyo Remote app is affected exactly like this project. Terminators (CR, 0x1A) are shown as `*`
+   and do not help, filling the field makes the TV text unreadable - it is a firmware limitation. The TV
+   on-screen display is not affected.
+5. **No entity decoding in DIDL.** The DMR takes DIDL text literally (`&amp;` would be shown as `&amp;`),
+   so with `ONKYO_EISCP=yes` titles are sent unescaped inside the (escaped) SOAP envelope.
+6. **DMR Max Volume.** A per-receiver volume cap applied at every DLNA start; if set to 0 the volume
    "drops to 0 every track". Set it in the receiver's web page (see [receiver-setup.md](receiver-setup.md)).
 
 ## Album cover

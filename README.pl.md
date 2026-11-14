@@ -262,6 +262,7 @@ przełączania utworów używaj aplikacji Spotify.
 | W aplikacji „gra”, amplituner nic nie robi, w logu `Play … 705` i brak linii `[proxy] <ip-amplitunera> GET` | **Zapora blokuje amplitunerowi TCP 5901** albo zły `HOST_IP` |
 | Linie `[proxy] … GET` są, a mimo to 705 | Odłącz amplituner od zasilania na ~30 s |
 | Gra, ale nic nie słychać | **DMR Max Volume = 0** na stronie amplitunera albo bardzo niska głośność w Spotify |
+| Tytuł na wyświetlaczu amplitunera odjeżdża i znika na ~2 minuty | Ograniczenie firmware amplitunera w trybie DLNA (oficjalna aplikacja Onkyo ma to samo): dopełnia tekst do 64 znaków i przewija też puste miejsce. Nie da się tego naprawić bez zmiany firmware; telewizor pokazuje wszystko poprawnie |
 | Krótkie przerwy na początku każdego utworu | Normalne przy `META_UPDATE=yes`; ustaw `no`, jeśli wolisz bez przerw |
 | Po ~3 miesiącach przestało działać | Build Soloist wygasł; kontener sam pobiera nowy po restarcie (`restart: unless-stopped`, dostęp do internetu) |
 

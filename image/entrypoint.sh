@@ -9,7 +9,7 @@
 #   - maps the receiver remote: Stop -> pause Spotify, NET -> resume, power off -> pause.
 set -euo pipefail
 
-VERSION="1.2.0"
+VERSION="1.2.1"
 
 # ---------------------------------------------------------------- configuration --
 : "${PUID:=1000}"                       # user/group that owns /config

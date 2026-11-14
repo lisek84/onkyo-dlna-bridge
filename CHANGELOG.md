@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.1
+
+- Fix: titles/artists with `&`, `<`, `>` were shown as `&amp;` etc. on Onkyo receivers (their DMR does not
+  decode entities inside DIDL); control characters are stripped from metadata.
+- Docs: front display scrolling quirk of the Onkyo DMR (64-byte NUL-padded fields, also in the official app)
+  documented as a known firmware limitation.
+
 ## 1.2.0
 
 - **Renamed** from `onkyo-spotify-connect` to **`onkyo-dlna-bridge`** (repository, image
