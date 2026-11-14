@@ -9,7 +9,7 @@
 #   - maps the receiver remote: Stop -> pause Spotify, NET -> resume, power off -> pause.
 set -euo pipefail
 
-VERSION="1.3.0"
+VERSION="1.3.1"
 
 # ---------------------------------------------------------------- configuration --
 : "${PUID:=1000}"                       # user/group that owns /config
@@ -153,10 +153,22 @@ for _ in $(seq 1 50); do as_user pactl info >/dev/null 2>&1 && break; sleep 0.2;
 as_user pactl info | grep -E 'Default (Sink|Source)' || { log "ERROR: PulseAudio did not start"; exit 1; }
 
 # -------------- 2. Soloist: Spotify Connect receiver (+ local WebSocket API for state) --
+# Soloist reports in its log whether this device is the active Spotify Connect device; the watcher
+# must ignore the receiver completely while another device (e.g. the phone) is playing.
+echo 0 > /tmp/soloist-active
+soloist_log() {
+  while IFS= read -r l; do
+    printf '%s\n' "$l"
+    case "$l" in
+      *"became active device"*)    echo 1 > /tmp/soloist-active ;;
+      *"no longer active device"*) echo 0 > /tmp/soloist-active ;;
+    esac
+  done
+}
 # shellcheck disable=SC2086
 as_user "$SOLOIST" -n "$DEVICE_NAME" -k "$SOLOIST_API_KEY" \
   -D "$DATA" -C /config/soloist-cache -z 500 -w 127.0.0.1:0 \
-  -i "$INITIAL_VOLUME" $SOLOIST_EXTRA_ARGS &
+  -i "$INITIAL_VOLUME" $SOLOIST_EXTRA_ARGS > >(soloist_log) 2>&1 &
 SOLOIST_PID=$!
 
 # ---------------------------- 3. stream server, proxy and receiver control helpers --
@@ -174,7 +186,7 @@ python3 -u /usr/local/bin/dlna-proxy.py &
 PROXY_PID=$!
 
 # Persistent eISCP connection: receiver events (NET button, power off).
-rm -f /tmp/iscp-net /tmp/iscp-off /tmp/proxy-eof
+rm -f /tmp/iscp-net /tmp/iscp-off /tmp/iscp-play /tmp/proxy-eof
 ISCP_PID=""
 if [ "$ONKYO_EISCP" = "yes" ]; then
   python3 -u /usr/local/bin/iscp-events.py &
@@ -209,13 +221,34 @@ watcher() {
   set +e
   local status last="" idle_since now next_amp=0 tries=0 st ast ours json title artist album cover
   local meta="" shown="" amp_prev="" user_stop=0 stop_ts=0 net_ts play_seen=0
-  local off_ts off_seen=0 off_hold=0 net_used=0 eof_ts
+  local off_ts off_seen=0 off_hold=0 net_used=0 eof_ts play_ts active was_active=0
   idle_since=$(date +%s)
   while kill -0 "$SOLOIST_PID" 2>/dev/null; do
     json=$(as_user "$SOLOIST" ctl -D "$DATA" now --json 2>/dev/null)
     IFS=$'\x1f' read -r status title artist album cover < <(printf '%s' "$json" | python3 /usr/local/bin/now-meta.py)
     status=${status:-idle}
     [ "$META_UPDATE" = "yes" ] || { title=""; artist=""; album=""; cover=""; }
+
+    # --- only act while this device is the active Spotify Connect device ---
+    active=$(cat /tmp/soloist-active 2>/dev/null || echo 0)
+    if [ "$active" != 1 ]; then
+      if [ "$was_active" = 1 ]; then
+        log "Spotify moved to another device -> releasing the receiver"
+        swyh_running && amp stop "$STREAM_URL"
+        swyh_stop
+        user_stop=0; off_hold=0; amp_prev=""; last=""
+        was_active=0
+      fi
+      # receiver events while another device is active must not fire later on re-activation
+      off_seen=$(cut -d. -f1 /tmp/iscp-off 2>/dev/null || echo 0); off_seen=${off_seen:-0}
+      net_used=$(cut -d. -f1 /tmp/iscp-net 2>/dev/null || echo 0); net_used=${net_used:-0}
+      sleep 2
+      continue
+    fi
+    if [ "$was_active" != 1 ]; then
+      log "Spotify Connect: this device is active"
+      was_active=1
+    fi
     [ "$COVER_ART" = "yes" ] || cover=""
     meta="$title|$artist"
     if [ "$status" != "$last" ]; then
@@ -270,6 +303,16 @@ watcher() {
     fi
     [ -n "$st" ] && amp_prev=$ast
     [ "$ast" = "PLAYING OK" ] && play_seen=$now
+
+    # --- the receiver started playing another source after our Stop (radio, DLNA server...)
+    #     -> the user moved on: cancel "NET resumes Spotify" (user_stop=2, no automatic restart)
+    if [ "$user_stop" = 1 ] && [ -f /tmp/iscp-play ] && [ "$ast" != "PLAYING OK" ]; then
+      play_ts=$(cut -d. -f1 /tmp/iscp-play 2>/dev/null)
+      if [ -n "$play_ts" ] && [ "$play_ts" -gt $((stop_ts + 2)) ]; then
+        log "receiver is playing another source -> NET will not resume Spotify"
+        user_stop=2
+      fi
+    fi
 
     # --- NET button after a remote Stop / power off -> resume Spotify ---
     if [ "$REMOTE_CONTROL" = "yes" ] && [ "$user_stop" = 1 ] && [ -f /tmp/iscp-net ]; then

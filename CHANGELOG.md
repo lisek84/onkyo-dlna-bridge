@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.3.1
+
+- Fix (important): after moving Spotify playback to another device (e.g. the phone), the receiver's remote
+  (NET) could still resume playback - on the phone - and start the receiver with silence. The container now
+  follows Soloist's "active device" state: while another device is active it ignores the receiver completely,
+  and it releases the receiver (stops its own stream) when playback moves away.
+- Docs: tested list of remote keys and what they do in DLNA renderer mode (Next/Previous cannot be mapped).
+- Fix: Spotify could resume by itself after you stopped it and used another NET source (e.g. internet radio).
+  A repeated "input = NET" status (sent by the receiver after a radio stream stops, or as an answer to another
+  app's query) was taken as a NET button press. Now only a real switch from another input (or the NET top menu)
+  counts, and if the receiver starts playing another source after the Stop, NET no longer resumes Spotify.
+
 ## 1.3.0
 
 - New `COVER_SIZE`: album cover size sent to the renderer - `default` (300 px, unchanged default), `large` (640 px)

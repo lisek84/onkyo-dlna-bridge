@@ -68,18 +68,29 @@ internet access; it is shown on the TV through the receiver's on-screen display.
 
 ## Remote control mapping
 
-In DLNA renderer mode the receiver reports very little over the network:
+The container only reacts to the receiver while **this device is the active Spotify Connect device**
+(Soloist logs "became active device" / "no longer active device"). When you move playback to another device
+(e.g. the phone), it stops its own stream on the receiver and ignores the remote until you select the receiver
+in Spotify again.
 
-| Remote key | Visible to the network? | Mapped to |
-|---|---|---|
-| Stop | yes – renderer goes `PLAYING → STOPPED OK` | `soloist ctl pause` |
-| NET | yes – eISCP `SLI2B` / `NLTF3…NET` | `soloist ctl play` (within `NET_RESUME_SECONDS` after Stop) |
-| Power off | yes – eISCP `PWR01 → PWR00` | `soloist ctl pause`, no automatic power-on afterwards |
-| Play, Pause, Next, Prev, FF, REW, Enter | **no** | – |
+In DLNA renderer mode the receiver reports very little over the network (tested key by key on a TX-NR609):
+
+| Remote key | Visible to the network? | Effect on the receiver | Mapped to |
+|---|---|---|---|
+| Stop | yes – renderer goes `PLAYING → STOPPED OK` | stops playback | `soloist ctl pause` |
+| NET | yes – eISCP `SLI2B` (from another input) / `NLTF3…NET` | NET input / NET top menu | `soloist ctl play` (within `NET_RESUME_SECONDS` after Stop) |
+| Power off | yes – eISCP `PWR01 → PWR00` | standby | `soloist ctl pause`, no automatic power-on afterwards |
+| Vol +/− | yes – eISCP `MVL` | amplifier volume | – (not mapped) |
+| ◀ / Return, Menu, Enter | yes – menu events | navigate the NET menu, leave the playback screen | – (side effects) |
+| CH +/−, digits 1–9 | yes | switch to an internet radio favourite | – (side effects) |
+| Play, Pause, Next, Prev, FF, REW, ▲ ▼ ▶, Display, Dimmer, Mode | **no** | – | – |
+
+So Next/Previous cannot be mapped to the remote; use the Spotify app.
 
 A stream failure is reported as `STOPPED ERROR_OCCURRED` and is retried (up to `AMP_MAX_TRIES` per session)
 instead of being treated as Stop. Spotify sometimes resumes by itself right after a pause ("bounce"); the
-watcher pauses it again within 6 s after Stop / 15 s after power-off.
+watcher pauses it again within 6 s after Stop / 15 s after power-off. If the receiver starts playing another
+source (e.g. internet radio) after a Stop, NET no longer resumes Spotify.
 
 ## Files in `config/`
 

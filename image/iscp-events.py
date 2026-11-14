@@ -4,6 +4,7 @@
 Logs relevant events and writes marker files read by the watcher in entrypoint.sh:
   /tmp/iscp-net  - time of the last NET button press (SLI2B, or NLTF3... = NET top menu)
   /tmp/iscp-off  - time of the last power-off transition (PWR01 -> PWR00)
+  /tmp/iscp-play - time of the last "network playback started" status (NSTP), any source
 In DLNA renderer mode the receiver reports only these; Play/Pause/Next/FF on the
 remote are handled internally and are not reported over the network.
 """
@@ -15,8 +16,10 @@ import time
 IP = os.environ["RENDERER_IP"]
 NET_FLAG = os.environ.get("ISCP_NET_FLAG", "/tmp/iscp-net")
 OFF_FLAG = os.environ.get("ISCP_OFF_FLAG", "/tmp/iscp-off")
+PLAY_FLAG = os.environ.get("ISCP_PLAY_FLAG", "/tmp/iscp-play")
 LOG_PREFIXES = ("PWR", "SLI", "NST", "NLTF3")
 power = None   # last known power state (answers to PWRQSTN also arrive as PWR..)
+selector = None   # last known input (SLI..); answers to SLIQSTN from any client are broadcast too
 
 
 def log(msg):
@@ -34,7 +37,7 @@ def mark(path):
 
 
 def handle(msg):
-    global power
+    global power, selector
     if msg.startswith("PWR"):
         if msg == power:
             return                      # repeated state (keepalive / queries) - not logged
@@ -44,8 +47,16 @@ def handle(msg):
         power = msg
     if msg.startswith(LOG_PREFIXES):
         log(msg[:40])
-    if msg == "SLI2B" or msg.startswith("NLTF3"):
+    if msg.startswith("SLI"):
+        # only a real switch from another input counts as "NET pressed"; a repeated SLI2B
+        # is just a status answer (e.g. to another app's query or after a radio stream stops)
+        if msg == "SLI2B" and selector not in (None, "SLI2B"):
+            mark(NET_FLAG)
+        selector = msg
+    elif msg.startswith("NLTF3"):       # NET pressed while already on NET -> NET top menu
         mark(NET_FLAG)
+    elif msg.startswith("NSTP"):        # something started playing (ours or another NET source)
+        mark(PLAY_FLAG)
 
 
 def run():

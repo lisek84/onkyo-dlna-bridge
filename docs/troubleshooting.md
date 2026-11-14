@@ -44,6 +44,10 @@ Set `META_UPDATE=no` for gapless playback with a fixed display text.
 
 ## Remote buttons
 
+The container reacts to the remote only while the receiver is the active device in Spotify. After you move
+playback to another device (phone, PC), the remote does nothing to Spotify.
+
+
 Only **Stop** (pause), **NET** (resume after Stop) and **power off** (pause) can be mapped; the receiver does
 not report other keys in DLNA mode. NET resumes only within `NET_RESUME_SECONDS` after a Stop/power off and
 only if `REMOTE_CONTROL=yes`.
