@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.1
+
+- Fix: `VOLUME_SYNC` forced Soloist's PulseAudio stream to 100 %, which is the Spotify volume itself – the slider
+  jumped to 100 % and the receiver to `VOLUME_MAX`. The stream volume is no longer touched; the virtual output
+  gets the inverse gain instead (full-level stream, verified with PulseAudio 17).
+
 ## 1.4.0
 
 - Optional receiver integration (all off by default, eISCP):

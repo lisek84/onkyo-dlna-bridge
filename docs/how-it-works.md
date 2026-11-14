@@ -99,7 +99,10 @@ All off by default; they use the same eISCP commands as the official Onkyo Remot
 - **`VOLUME_SYNC`** – at the start of a playback session the Spotify slider is set from the receiver's current
   volume; afterwards moving the slider sends `MVLxx` to the receiver (100 % = `VOLUME_MAX`), and volume changes
   made on the receiver (remote, knob – reported as `MVL` events) move the slider. Echoes of our own changes are
-  ignored. The PulseAudio stream is kept at 100 % so the receiver does the attenuation.
+  ignored. Soloist's Spotify volume *is* its PulseAudio stream volume, so the container never touches it;
+  instead the virtual output `dlna` gets the inverse gain (slider 50 % → output 200 %). PulseAudio applies both
+  in one step, so the stream sent to the receiver stays at full level (measured: identical to 100 %) and only
+  the receiver attenuates. Below 5 % the gain is capped and the stream simply gets quieter.
 - **`POWER_ON_VOLUME`** – applied only right after the container switched the receiver on from standby.
 - **`RESTORE_INPUT`** – before switching to NET the container remembers the input in use (e.g. `SLI01`); when
   Spotify is done (paused for `IDLE_STOP_SECONDS` or moved to another device) and the receiver is still idle on

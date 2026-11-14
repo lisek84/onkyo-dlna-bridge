@@ -9,7 +9,7 @@
 #   - maps the receiver remote: Stop -> pause Spotify, NET -> resume, power off -> pause.
 set -euo pipefail
 
-VERSION="1.4.0"
+VERSION="1.4.1"
 
 # ---------------------------------------------------------------- configuration --
 : "${PUID:=1000}"                       # user/group that owns /config
@@ -224,19 +224,18 @@ swyh_stop() {
 
 sctl() { as_user "$SOLOIST" ctl -D "$DATA" "$@" >/dev/null 2>&1; }
 
-# VOLUME_SYNC: keep the PulseAudio stream at 100 % - the receiver does the attenuation.
-# (If Soloist scales the samples itself instead of using the PulseAudio stream volume, the
-#  stream level still follows the slider; the log shows the stream volume once for diagnosis.)
-PA_LOGGED=""
-pa_full() {
-  local id
-  if [ -z "$PA_LOGGED" ]; then
-    log "PulseAudio stream volume before sync: $(as_user pactl list sink-inputs 2>/dev/null | grep -m1 -E '^[[:space:]]*Volume:' | tr -s ' ')"
-    PA_LOGGED=1
+# VOLUME_SYNC: the Spotify volume IS Soloist's PulseAudio stream volume - never touch it (that moves
+# the slider in the app). Instead the virtual output "dlna" gets the inverse gain (slider 50 % ->
+# output 200 %), so the stream sent to the receiver stays at full level and only the receiver
+# attenuates. PulseAudio multiplies both volumes in one step (verified: output identical to 100 %).
+pa_comp() {
+  local v=$1 out=100
+  [ -n "$v" ] || return 0
+  if [ "$VOLUME_SYNC" = "yes" ] && [ "$v" -gt 0 ]; then
+    out=$(( (10000 + v / 2) / v ))
+    [ "$out" -gt 2000 ] && out=2000            # below 5 % the stream is simply quieter
   fi
-  for id in $(as_user pactl list short sink-inputs 2>/dev/null | awk '{print $1}'); do
-    as_user pactl set-sink-input-volume "$id" 100% >/dev/null 2>&1
-  done
+  as_user pactl set-sink-volume dlna "${out}%" >/dev/null 2>&1
 }
 
 # AUTO_POWER_OFF_MINUTES: standby after N minutes without Spotify (amp-ctl checks that the
@@ -255,7 +254,7 @@ watcher() {
   local status last="" idle_since now next_amp=0 tries=0 st ast ours json title artist album cover
   local meta="" shown="" amp_prev="" user_stop=0 stop_ts=0 net_ts play_seen=0
   local off_ts off_seen=0 off_hold=0 net_used=0 eof_ts play_ts active was_active=0
-  local svol sv_last="" amp_expect="" mvl_seen=0 mts mval v m quiet_since=0
+  local svol sv_last="" amp_expect="" mvl_seen=0 mts mval v m quiet_since=0 comp_last=""
   idle_since=$(date +%s)
   while kill -0 "$SOLOIST_PID" 2>/dev/null; do
     json=$(as_user "$SOLOIST" ctl -D "$DATA" now --json 2>/dev/null)
@@ -366,6 +365,11 @@ watcher() {
       fi
     fi
 
+    # --- keep the output gain the inverse of the Spotify volume (full-level stream) ---
+    if [ "$VOLUME_SYNC" = "yes" ] && [ -n "$svol" ] && [ "$svol" != "$comp_last" ]; then
+      pa_comp "$svol"; comp_last=$svol
+    fi
+
     # --- volume sync: Spotify slider <-> receiver master volume (VOLUME_SYNC=yes) ---
     if [ "$VOLUME_SYNC" = "yes" ] && [ "$ONKYO_EISCP" = "yes" ] && [ "$ast" = "PLAYING OK" ] && [ -n "$svol" ]; then
       if [ -z "$sv_last" ]; then
@@ -376,13 +380,11 @@ watcher() {
           v=$(( (m * 100 + VOLUME_MAX / 2) / VOLUME_MAX )); [ "$v" -gt 100 ] && v=100
           sctl volume "$v"; sv_last=$v; amp_expect=$m
           log "volume sync: receiver $m -> Spotify $v %"
-          pa_full
         fi
       elif [ "$svol" != "$sv_last" ]; then
         m=$(( (svol * VOLUME_MAX + 50) / 100 ))
         amp volume "$m"; amp_expect=$m; sv_last=$svol
         log "volume sync: Spotify $svol % -> receiver $m"
-        pa_full
       fi
       if [ -f /tmp/iscp-mvl ]; then
         read -r mts mval < /tmp/iscp-mvl; mts=${mts%%.*}
