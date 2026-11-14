@@ -7,6 +7,9 @@
 # (builds expire after 90 days - a container restart fetches a fresh one).
 #
 # For ARM (Raspberry Pi) use Dockerfile.arm - swyh-rs has no ARM CLI release.
+#
+# Third-party software in this image: swyh-rs-cli (MIT, license in /usr/share/doc/swyh-rs/LICENSE)
+# and Debian packages (licenses in /usr/share/doc/<package>/copyright).
 
 FROM debian:trixie-slim
 
@@ -32,7 +35,10 @@ RUN mkdir -p /opt/swyh && cd /opt/swyh \
  && chmod +x swyh.AppImage \
  && ./swyh.AppImage --appimage-extract >/dev/null \
  && install -m 755 squashfs-root/usr/bin/swyh-rs-cli /usr/local/bin/swyh-rs-cli \
- && rm -rf /opt/swyh
+ && rm -rf /opt/swyh \
+ && mkdir -p /usr/share/doc/swyh-rs \
+ && curl -fsSL -o /usr/share/doc/swyh-rs/LICENSE \
+      "https://raw.githubusercontent.com/dheijl/swyh-rs/${SWYH_VERSION}/LICENSE"
 
 COPY pulse.pa    /etc/pulse/soloist.pa
 COPY asound.conf /etc/asound.conf

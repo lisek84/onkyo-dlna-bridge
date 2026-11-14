@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1
+
+- Container images now include the swyh-rs MIT license (`/usr/share/doc/swyh-rs/LICENSE`), as required
+  for redistributing its binary; README states what the published image contains (and that it does not
+  contain Spotify Soloist)
+
 ## 1.1.0
 
 - Album cover sent with the track metadata (`upnp:albumArtURI`, `COVER_ART=yes`), shown on the TV via the

@@ -278,5 +278,7 @@ Więcej (po angielsku): [docs/troubleshooting.md](docs/troubleshooting.md).
   uruchomieniu; jego używanie podlega warunkom Spotify akceptowanym przy generowaniu klucza API
   (zob. [dokumentację Spotify Soloist](https://developer.spotify.com/documentation/soloist)).
   Twój klucz API jest osobisty – nie udostępniaj go.
-- [swyh-rs](https://github.com/dheijl/swyh-rs) (MIT) jest pobierany/kompilowany podczas budowania obrazu.
+- **Co zawiera obraz kontenera:** skrypty tego projektu, pakiety Debiana oraz program
+  [swyh-rs](https://github.com/dheijl/swyh-rs) (MIT © dheijl – jego licencja jest dołączona w obrazie:
+  `/usr/share/doc/swyh-rs/LICENSE`). Obraz **nie** zawiera Spotify Soloist.
 - Kod w tym repozytorium jest udostępniony na [licencji MIT](LICENSE) © Lisek ([lisek84](https://github.com/lisek84)).

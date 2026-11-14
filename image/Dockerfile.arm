@@ -6,6 +6,8 @@
 # about 2 GB of free RAM+swap; later builds reuse the Docker cache.
 #
 # Spotify Soloist is NOT included (see Dockerfile) - it is downloaded on container start.
+# Third-party software in this image: swyh-rs-cli (MIT, license in /usr/share/doc/swyh-rs/LICENSE)
+# and Debian packages (licenses in /usr/share/doc/<package>/copyright).
 
 ARG SWYH_VERSION=1.21.1
 
@@ -36,6 +38,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=swyh /usr/local/bin/swyh-rs-cli /usr/local/bin/swyh-rs-cli
+COPY --from=swyh /src/LICENSE /usr/share/doc/swyh-rs/LICENSE
 COPY pulse.pa    /etc/pulse/soloist.pa
 COPY asound.conf /etc/asound.conf
 COPY entrypoint.sh dlna-proxy.py amp-ctl.py now-meta.py iscp-events.py /usr/local/bin/

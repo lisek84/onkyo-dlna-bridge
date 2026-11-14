@@ -188,5 +188,7 @@ Use the Spotify app for skipping tracks.
   runtime; its use is governed by the Spotify terms you accept when generating the API key
   (see the [Spotify Soloist documentation](https://developer.spotify.com/documentation/soloist)).
   Your API key is personal — do not share it.
-- [swyh-rs](https://github.com/dheijl/swyh-rs) (MIT) is downloaded/built during the image build.
+- **What the container image contains:** this project's scripts, Debian packages, and the
+  [swyh-rs](https://github.com/dheijl/swyh-rs) command-line binary (MIT © dheijl – its license is included in
+  the image at `/usr/share/doc/swyh-rs/LICENSE`). It does **not** contain Spotify Soloist.
 - The code in this repository is released under the [MIT License](LICENSE) © Lisek ([lisek84](https://github.com/lisek84)).
