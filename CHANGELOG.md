@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0
+
+- **Renamed** from `onkyo-spotify-connect` to **`onkyo-dlna-bridge`** (repository, image
+  `ghcr.io/lisek84/onkyo-dlna-bridge`, container names) to follow Spotify's branding guidelines
+  (no "Spotify" in product names).
+- New `STREAM_ALLOW` (default `renderer`): the audio stream is served only to the receiver; other devices get
+  HTTP 403. Accepts a list of IPs/subnets, or empty for the previous behaviour.
+- swyh-rs now listens on localhost only (the proxy falls back to `HOST_IP` if needed).
+- README/docs: clearer disclaimers (no affiliation/certification, personal non-commercial use, nothing is
+  recorded), Premium needed only to create the Soloist key.
+
 ## 1.1.1
 
 - Container images now include the swyh-rs MIT license (`/usr/share/doc/swyh-rs/LICENSE`), as required

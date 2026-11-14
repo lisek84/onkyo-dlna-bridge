@@ -46,6 +46,21 @@ sudo firewall-cmd --permanent --add-service=mdns
 sudo firewall-cmd --reload
 ```
 
+## Who may fetch the stream (`STREAM_ALLOW`)
+
+The audio is served as a plain LPCM HTTP stream on `STREAM_PORT`. To keep it from being captured by other
+devices (Spotify's developer terms forbid facilitating stream capture), the proxy answers **only the
+receiver** by default:
+
+| `STREAM_ALLOW` | Effect |
+|---|---|
+| `renderer` *(default)* | only `RENDERER_IP` may fetch the stream, everyone else gets HTTP 403 |
+| `192.168.1.50,192.168.1.0/24` | a comma-separated list of IPs and/or subnets (e.g. if the receiver's IP changes via DHCP) |
+| *(empty)* | anyone in the LAN (not recommended) |
+
+`RENDERER_IP` must be correct anyway (the container controls the receiver through it), so the default does
+not add a new failure point. The internal swyh-rs capture port (`SWYH_PORT`) listens on localhost only.
+
 ## Several network interfaces
 
 If the host has VPN, Docker bridges, a second NIC etc., set `HOST_IP` explicitly to the LAN address the

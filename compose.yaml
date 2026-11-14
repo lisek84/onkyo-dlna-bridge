@@ -1,4 +1,4 @@
-# onkyo-spotify-connect - Docker Compose / Podman Compose
+# onkyo-dlna-bridge - Docker Compose / Podman Compose
 #
 #   cp soloist.env.example soloist.env    # then edit it (API key, receiver IP, ...)
 #   docker compose up -d --build
@@ -8,12 +8,12 @@
 # Synology DSM: use deploy/synology/ instead (see docs/synology.md).
 
 services:
-  onkyo-spotify-connect:
+  onkyo-dlna-bridge:
     build:
       context: ./image
       dockerfile: Dockerfile          # Dockerfile.arm on arm64 / armv7 (Raspberry Pi)
-    image: local/onkyo-spotify-connect:latest
-    container_name: onkyo-spotify-connect
+    image: local/onkyo-dlna-bridge:latest
+    container_name: onkyo-dlna-bridge
     # Host networking is required: Spotify Connect discovery (mDNS) and the
     # receiver's DLNA renderer only work on the real LAN interface.
     network_mode: host

@@ -19,6 +19,7 @@ Look for `[amp]` lines in the log:
 |---|---|
 | `Play (…) -> 500 705 Transport is locked` ×10 and **no** `[proxy] <receiver-ip> GET` lines | The receiver cannot reach the stream. **Allow TCP 5901 from the receiver's IP in the host firewall** ([networking.md](networking.md)); check `HOST_IP`. |
 | `[proxy] … GET` lines present, but still 705 | Power-cycle the receiver (unplug ~30 s), then try again. |
+| `[proxy] <ip> GET … -> 403 (not in STREAM_ALLOW)` with the receiver's IP | The receiver's IP differs from `RENDERER_IP` (DHCP?) – fix `RENDERER_IP` / reserve the IP, or list a subnet in `STREAM_ALLOW`. |
 | `eISCP unreachable` | Wrong `RENDERER_IP`, receiver unplugged, or Network Standby off. |
 | `DMR not responding` / state `NO_DMR` | Renderer hung – unplug the receiver ~30 s. |
 | `receiver in standby and AUTO_POWER_ON=no` | Switch it on, or set `AUTO_POWER_ON=yes`. |

@@ -1,5 +1,5 @@
 #!/bin/bash
-# onkyo-spotify-connect - container entrypoint
+# onkyo-dlna-bridge - container entrypoint
 #
 # Starts PulseAudio (virtual "dlna" sink), Spotify Soloist (Spotify Connect receiver),
 # an HTTP proxy for the receiver, an eISCP event listener, and a watcher that:
@@ -9,7 +9,7 @@
 #   - maps the receiver remote: Stop -> pause Spotify, NET -> resume, power off -> pause.
 set -euo pipefail
 
-VERSION="1.1.1"
+VERSION="1.2.0"
 
 # ---------------------------------------------------------------- configuration --
 : "${PUID:=1000}"                       # user/group that owns /config
@@ -20,6 +20,8 @@ VERSION="1.1.1"
 : "${HOST_IP:=}"                        # LAN IP of this host; auto-detected when empty
 : "${INITIAL_VOLUME:=70}"               # initial Soloist (digital) volume 0-100
 : "${STREAM_PORT:=5901}"                # TCP port the receiver pulls audio from (open it in the firewall)
+: "${STREAM_ALLOW=renderer}"            # who may fetch the audio stream: "renderer" = only RENDERER_IP
+                                        # (default), a comma list of IPs/subnets, or empty = anyone in the LAN
 : "${SWYH_PORT:=5911}"                  # internal swyh-rs port (read only by the proxy)
 : "${PLAY_TITLE:=Spotify}"              # display text when no track metadata is sent
 : "${COVER_ART:=yes}"                   # yes = send the album cover with the metadata (shown on the TV/OSD)
@@ -49,7 +51,7 @@ if [ "$LOG_TO_FILE" = "yes" ]; then
   exec > >(while IFS= read -r l; do printf '%s %s\n' "$(date '+%F %T')" "$l"; done | tee -a "$LOGF") 2>&1
 fi
 
-log "onkyo-spotify-connect $VERSION"
+log "onkyo-dlna-bridge $VERSION"
 
 # ----------------------------------------------------------- host IP detection --
 if [ -z "$HOST_IP" ]; then
@@ -95,7 +97,7 @@ inject_silence = true
 buffering_delay_msec = 0
 latency_reduction_delay_msec = 0
 latency_reduction_msec = 0
-last_network = "$HOST_IP"
+last_network = "127.0.0.1"
 active_renderers = []
 hidden_renderers = []
 config_dir = "/config/home/.swyh-rs"
@@ -160,7 +162,10 @@ SOLOIST_PID=$!
 # dlna-proxy.py serves it to the receiver as a large "file" (Content-Length, Range,
 # 206) and sends silence instead of an error while swyh-rs is not running - legacy
 # DMRs lock up (UPnP 705) after a failed stream. amp-ctl.py starts playback.
-export RENDERER_IP AUTO_POWER_ON ONKYO_EISCP PROXY_PORT="$STREAM_PORT" UPSTREAM_HOST="$HOST_IP" UPSTREAM_PORT="$SWYH_PORT"
+# swyh-rs listens on localhost only (the receiver talks to the proxy, never to swyh-rs);
+# the proxy falls back to HOST_IP in case swyh-rs binds there instead.
+export RENDERER_IP AUTO_POWER_ON ONKYO_EISCP STREAM_ALLOW PROXY_PORT="$STREAM_PORT" \
+       UPSTREAM_HOST="127.0.0.1,$HOST_IP" UPSTREAM_PORT="$SWYH_PORT"
 STREAM_URL="http://$HOST_IP:$STREAM_PORT/stream.lpcm"
 
 python3 -u /usr/local/bin/dlna-proxy.py &
@@ -180,7 +185,7 @@ SWYH_PID=""
 swyh_running() { [ -n "$SWYH_PID" ] && kill -0 "$SWYH_PID" 2>/dev/null; }
 swyh_start() {
   # shellcheck disable=SC2086
-  as_user swyh-rs-cli -c soloist -x true -e "$HOST_IP" -p "$SWYH_PORT" \
+  as_user swyh-rs-cli -c soloist -x true -e 127.0.0.1 -p "$SWYH_PORT" \
     -s "$SWYH_SOURCE" -f lpcm -b 16 -R 44100 -S true -P false \
     $SWYH_EXTRA_ARGS 2>&1 | grep --line-buffered -vE 'ALSA lib|Jack|jack server|Cannot connect to server' &
   SWYH_PID=$!
@@ -292,7 +297,10 @@ watcher() {
                 tries=$((tries + 1))
                 log "receiver: '${st:-?}' -> starting playback (attempt $tries/$AMP_MAX_TRIES)"
                 # wait until swyh-rs listens (max 10 s)
-                for _ in $(seq 1 20); do (exec 3<>"/dev/tcp/$HOST_IP/$SWYH_PORT") 2>/dev/null && break; sleep 0.5; done
+                for _ in $(seq 1 20); do
+                  { (exec 3<>"/dev/tcp/127.0.0.1/$SWYH_PORT") || (exec 3<>"/dev/tcp/$HOST_IP/$SWYH_PORT"); } 2>/dev/null && break
+                  sleep 0.5
+                done
                 # amp-ctl verifies PLAYING, so treat it as playing at once - a remote Stop
                 # right after the start must not look like a failure
                 if amp play "$STREAM_URL" "${title:-$PLAY_TITLE}" "${artist:-$PLAY_TITLE}" "$album" "$cover"; then
@@ -317,7 +325,7 @@ watcher &
 WATCH_PID=$!
 
 log "started: pulseaudio=$PA_PID soloist=$SOLOIST_PID proxy=$PROXY_PID eiscp=${ISCP_PID:-off} watcher=$WATCH_PID"
-log "receiver=$RENDERER_IP host=$HOST_IP stream=$STREAM_URL eiscp=$ONKYO_EISCP auto_power_on=$AUTO_POWER_ON remote=$REMOTE_CONTROL metadata=$META_UPDATE cover=$COVER_ART"
+log "receiver=$RENDERER_IP host=$HOST_IP stream=$STREAM_URL eiscp=$ONKYO_EISCP auto_power_on=$AUTO_POWER_ON remote=$REMOTE_CONTROL metadata=$META_UPDATE cover=$COVER_ART stream_allow=${STREAM_ALLOW:-anyone}"
 
 # If PulseAudio, Soloist or the proxy exits, exit too and let the restart policy restart
 # the container (this also fetches a fresh Soloist build after expiry, exit code 10).

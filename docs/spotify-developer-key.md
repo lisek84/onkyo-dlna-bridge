@@ -1,7 +1,9 @@
 # Getting a Spotify Soloist API key
 
 You need **one personal API key**. It is free, but the Spotify account that creates it must have
-**Spotify Premium**. You do **not** need to create a Spotify "app" or a client ID/secret for Soloist.
+**Spotify Premium**. Once Soloist is running, both Free and Premium users can play to it (per Spotify's
+announcement; some features such as lossless are Premium-only). You do **not** need to create a Spotify "app"
+or a client ID/secret for Soloist.
 
 ## Steps
 

@@ -7,7 +7,7 @@ compile swyh-rs).
 ## 1. Prepare the folder
 
 1. Install **Container Manager** from the Package Center (it creates the shared folder `docker`).
-2. Create the folder `/volume1/docker/onkyo-spotify-connect` (File Station).
+2. Create the folder `/volume1/docker/onkyo-dlna-bridge` (File Station).
 3. Copy into it:
    - `deploy/synology/compose.yaml` → `compose.yaml`
    - the whole `image/` folder → `image/`
@@ -15,7 +15,7 @@ compile swyh-rs).
 
    Result:
    ```
-   /volume1/docker/onkyo-spotify-connect/
+   /volume1/docker/onkyo-dlna-bridge/
    ├── compose.yaml
    ├── soloist.env
    └── image/
@@ -40,8 +40,8 @@ playback fails with UPnP 705.
 ## 3. Create the project
 
 Container Manager → **Project** → **Create**:
-- Project name: `onkyo-spotify-connect`
-- Path: `/docker/onkyo-spotify-connect`
+- Project name: `onkyo-dlna-bridge`
+- Path: `/docker/onkyo-dlna-bridge`
 - Source: **Use existing docker-compose.yml** (compose.yaml)
 - Skip the web portal settings → **Done**. The image is built (a few minutes) and the container starts.
 
@@ -50,11 +50,11 @@ are always picked up.
 
 ## 4. Check
 
-Container Manager → Container → `onkyo-spotify-connect` → **Log**, or the file
-`/volume1/docker/onkyo-spotify-connect/config/container.log`. You should see:
+Container Manager → Container → `onkyo-dlna-bridge` → **Log**, or the file
+`/volume1/docker/onkyo-dlna-bridge/config/container.log`. You should see:
 
 ```
-[entrypoint] onkyo-spotify-connect 1.0.0
+[entrypoint] onkyo-dlna-bridge 1.0.0
 [entrypoint] started: pulseaudio=… soloist=… proxy=… eiscp=… watcher=…
 [eiscp] connected to <receiver-ip>:60128
 … ready, device_name=… 

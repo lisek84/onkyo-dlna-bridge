@@ -1,6 +1,6 @@
-# onkyo-spotify-connect - Synology DSM 7.2+ (Container Manager project)
+# onkyo-dlna-bridge - Synology DSM 7.2+ (Container Manager project)
 #
-# Folder layout on the NAS (e.g. /volume1/docker/onkyo-spotify-connect):
+# Folder layout on the NAS (e.g. /volume1/docker/onkyo-dlna-bridge):
 #   compose.yaml        <- this file
 #   soloist.env         <- copied from soloist.env.example and edited
 #   image/              <- the image/ folder of this repository
@@ -10,14 +10,14 @@
 # See docs/synology.md for the full walkthrough (including the firewall rule).
 
 services:
-  onkyo-spotify-connect:
+  onkyo-dlna-bridge:
     build:
       context: ./image
       dockerfile: Dockerfile
-    image: local/onkyo-spotify-connect:latest
+    image: local/onkyo-dlna-bridge:latest
     # Rebuild the image whenever the project is started (picks up updated scripts).
     pull_policy: build
-    container_name: onkyo-spotify-connect
+    container_name: onkyo-dlna-bridge
     # Required for Spotify Connect discovery (mDNS) and DLNA.
     network_mode: host
     env_file:

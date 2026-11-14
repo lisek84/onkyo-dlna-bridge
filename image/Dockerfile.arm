@@ -1,4 +1,4 @@
-# onkyo-spotify-connect - ARM image (arm64 / armv7, e.g. Raspberry Pi)
+# onkyo-dlna-bridge - ARM image (arm64 / armv7, e.g. Raspberry Pi)
 #
 # Identical runtime to the x86_64 image, but swyh-rs-cli is compiled from source,
 # because swyh-rs publishes its CLI only as an x86_64 AppImage.
@@ -24,11 +24,11 @@ RUN git clone --depth 1 --branch "${SWYH_VERSION}" https://github.com/dheijl/swy
 
 FROM debian:trixie-slim
 
-LABEL org.opencontainers.image.title="onkyo-spotify-connect" \
+LABEL org.opencontainers.image.title="onkyo-dlna-bridge" \
       org.opencontainers.image.description="Spotify Connect for legacy Onkyo network receivers via Spotify Soloist and DLNA" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.authors="Lisek (lisek84)" \
-      org.opencontainers.image.source="https://github.com/lisek84/onkyo-spotify-connect"
+      org.opencontainers.image.source="https://github.com/lisek84/onkyo-dlna-bridge"
 
 RUN apt-get update \
  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \

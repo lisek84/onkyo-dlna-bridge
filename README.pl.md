@@ -1,18 +1,21 @@
-# onkyo-spotify-connect
+# onkyo-dlna-bridge
 
 [English](README.md) | **Polski**
 
-[![image](https://github.com/lisek84/onkyo-spotify-connect/actions/workflows/image.yml/badge.svg)](https://github.com/lisek84/onkyo-spotify-connect/actions/workflows/image.yml)
+[![image](https://github.com/lisek84/onkyo-dlna-bridge/actions/workflows/image.yml/badge.svg)](https://github.com/lisek84/onkyo-dlna-bridge/actions/workflows/image.yml)
 
-**Spotify Connect dla starszych amplitunerów sieciowych Onkyo** (z lat ok. 2010–2013, np. TX-NR609),
-których wbudowany klient Spotify przestał działać, gdy Spotify wyłączyło bibliotekę libspotify.
+**Spotify znów na starszych amplitunerach sieciowych Onkyo** (z lat ok. 2010–2013, np. TX-NR609), których
+wbudowana funkcja Spotify przestała działać, gdy Spotify wycofało swoją starą bibliotekę libspotify.
 
-Mały kontener na NAS-ie, Raspberry Pi albo dowolnym komputerze z Linuksem staje się urządzeniem
-Spotify Connect (dzięki **Spotify Soloist** – oficjalnemu odbiornikowi od samego Spotify). Dźwięk jest
-przesyłany do wbudowanego w amplituner odtwarzacza DLNA, więc w aplikacji Spotify wybierasz
-*„Onkyo Receiver”* i muzyka gra z amplitunera – z tytułem i wykonawcą na wyświetlaczu, okładką albumu na
-telewizorze, automatycznym włączaniem i przełączaniem wejścia, a przyciski **Stop** / **NET** na pilocie
-działają jako pauza / wznowienie.
+Mały kontener na NAS-ie, Raspberry Pi albo dowolnym komputerze z Linuksem uruchamia **Spotify Soloist** –
+oficjalnego klienta od samego Spotify – i przekazuje dźwięk do wbudowanego w amplituner odtwarzacza DLNA.
+W aplikacji Spotify wybierasz z listy urządzeń *„Onkyo Receiver”* i muzyka gra z amplitunera – z tytułem
+i wykonawcą na wyświetlaczu, okładką albumu na telewizorze, automatycznym włączaniem i przełączaniem
+wejścia, a przyciski **Stop** / **NET** na pilocie działają jako pauza / wznowienie.
+
+> To niezależny projekt hobbystyczny. **Nie jest powiązany ze Spotify, wspierany ani certyfikowany przez
+> Spotify** (amplituner nie staje się certyfikowanym urządzeniem „Spotify Connect”) **ani przez Onkyo**.
+> Wyłącznie do prywatnego, niekomercyjnego użytku.
 
 ## Jak to wygląda
 
@@ -53,14 +56,15 @@ generacji. Żadnej aktualizacji, żadnego zamiennika, nic: pozycja „Spotify”
 i została tam, martwa. Tysiące dobrych urządzeń z dnia na dzień straciło funkcję przez decyzję podjętą gdzieś
 indziej – i to zdenerwowało mnie na tyle, żeby coś z tym zrobić.
 
-Nie chciałem rozwiązania, które łamie zabezpieczenia amplitunera albo obchodzi zasady Spotify. Dlatego ten
-projekt celowo pozostaje **po legalnej stronie**:
+Chciałem rozwiązania, które szanuje zarówno urządzenie, jak i zasady Spotify, dlatego projekt celowo
+korzysta wyłącznie z oficjalnych elementów:
 
-- Korzysta ze **Spotify Soloist – oficjalnego klienta Spotify Connect od samego Spotify** – z Twoim własnym
-  kluczem API dewelopera i Twoim kontem Premium. Żadnego klienta Spotify odtworzonego metodą inżynierii
-  wstecznej, żadnego obchodzenia czegokolwiek.
-- Soloist **nie jest redystrybuowany** – kontener pobiera go z oficjalnego serwera (CDN) Spotify, tak jak
-  wymaga tego Spotify.
+- Używa **Spotify Soloist – oficjalnego klienta od samego Spotify** – z Twoim własnym kluczem API
+  dewelopera. Żadnego klienta Spotify odtworzonego metodą inżynierii wstecznej, żadnego obchodzenia czegokolwiek.
+- Soloist **nie jest redystrybuowany** – każda instalacja pobiera go z oficjalnego serwera (CDN) Spotify,
+  tak jak prosi o to Spotify.
+- Dźwięk trafia **wyłącznie do Twojego amplitunera** w domowej sieci (domyślnie inne urządzenia dostają
+  odmowę) i **nigdy nie jest nagrywany ani zapisywany**.
 - Amplituner jest sterowany wyłącznie przez **interfejsy, które oficjalnie udostępnia** w sieci (odtwarzacz
   DLNA i udokumentowany protokół eISCP Onkyo). Jego oprogramowanie nie jest w żaden sposób zmieniane.
 
@@ -79,7 +83,7 @@ Szczegóły (po angielsku): [docs/how-it-works.md](docs/how-it-works.md).
 
 ## Funkcje
 
-- Widoczny jako zwykłe urządzenie **Spotify Connect** (oficjalny Spotify Soloist, bez klientów z inżynierii wstecznej)
+- Widoczny na liście urządzeń w aplikacji Spotify dzięki oficjalnemu klientowi **Spotify Soloist** (bez klientów z inżynierii wstecznej)
 - Bezstratny strumień **LPCM 44,1 kHz / 16 bit** do amplitunera (natywnie obsługiwany przez te odtwarzacze DLNA)
 - **Włącza amplituner** i przełącza go na NET → DLNA, gdy zaczynasz odtwarzanie
 - **Tytuł / wykonawca / album** na wyświetlaczu amplitunera i **okładka albumu** na telewizorze (menu ekranowe
@@ -102,11 +106,12 @@ Szczegóły (po angielsku): [docs/how-it-works.md](docs/how-it-works.md).
 Inne amplitunery sieciowe Onkyo / Integra tej samej generacji oraz odtwarzacze DLNA innych marek powinny
 działać – w pełni albo częściowo, zob. [docs/compatibility.md](docs/compatibility.md) – ale nie były
 testowane. Zgłoszenia (czy działa, czy nie) mile widziane w
-[issues](https://github.com/lisek84/onkyo-spotify-connect/issues).
+[issues](https://github.com/lisek84/onkyo-dlna-bridge/issues).
 
 ## Wymagania
 
-- Konto **Spotify Premium** i darmowy **klucz API Spotify Soloist** → zob. [Klucz API](#klucz-api-spotify-soloist) poniżej
+- Darmowy **klucz API Spotify Soloist**, utworzony z konta **Spotify Premium** (gdy już działa, odtwarzać na nim
+  mogą użytkownicy Free i Premium) → zob. [Klucz API](#klucz-api-spotify-soloist) poniżej
 - Komputer/NAS w **tej samej sieci LAN** co amplituner, z Dockerem lub Podmanem, **siecią hosta**
   (`network_mode: host`) i ok. 100 MB RAM (x86_64, arm64 lub armv7; obraz oparty o glibc, Debian trixie)
 - Amplituner z włączoną siecią, stałym adresem IP i dwoma sprawdzonymi ustawieniami → [Przygotowanie amplitunera](#przygotowanie-amplitunera)
@@ -116,7 +121,8 @@ testowane. Zgłoszenia (czy działa, czy nie) mile widziane w
 ## Klucz API Spotify Soloist
 
 Potrzebny jest **jeden osobisty klucz API**. Jest darmowy, ale konto Spotify, które go tworzy, musi mieć
-**Spotify Premium**. **Nie** trzeba tworzyć żadnej „aplikacji” ani Client ID/Secret.
+**Spotify Premium** (później, gdy Soloist już działa, odtwarzać na nim mogą też użytkownicy kont Free).
+**Nie** trzeba tworzyć żadnej „aplikacji” ani Client ID/Secret.
 
 1. Wejdź na **<https://developer.spotify.com/>** i zaloguj się swoim kontem Spotify (Premium). Przy pierwszej
    wizycie zaakceptuj warunki Spotify for Developers.
@@ -178,8 +184,8 @@ Przepisy dla firewalld i więcej szczegółów (po angielsku): [docs/networking.
 ## Szybki start (Docker / Podman na Linuksie)
 
 ```bash
-git clone https://github.com/lisek84/onkyo-spotify-connect.git
-cd onkyo-spotify-connect
+git clone https://github.com/lisek84/onkyo-dlna-bridge.git
+cd onkyo-dlna-bridge
 cp soloist.env.example soloist.env
 nano soloist.env               # SOLOIST_API_KEY, RENDERER_IP, DEVICE_NAME, PUID/PGID
 docker compose up -d --build   # Raspberry Pi: najpierw ustaw w compose.yaml dockerfile: Dockerfile.arm
@@ -190,13 +196,13 @@ Otwórz Spotify na telefonie → **Urządzenia** → wybierz swoje `DEVICE_NAME`
 Przy pierwszym połączeniu Soloist loguje się na Twoje konto; później łączy się już sam.
 
 **Gotowy obraz (opcjonalnie):** workflow GitHub Actions publikuje obraz wieloarchitekturowy (amd64, arm64)
-w `ghcr.io/lisek84/onkyo-spotify-connect`. Aby go użyć zamiast budować lokalnie, zastąp blok `build:`
-w `compose.yaml` linią `image: ghcr.io/lisek84/onkyo-spotify-connect:latest`.
+w `ghcr.io/lisek84/onkyo-dlna-bridge`. Aby go użyć zamiast budować lokalnie, zastąp blok `build:`
+w `compose.yaml` linią `image: ghcr.io/lisek84/onkyo-dlna-bridge:latest`.
 
 ### Synology DSM (Container Manager)
 
 1. Zainstaluj **Container Manager** z Centrum pakietów.
-2. Utwórz folder `/volume1/docker/onkyo-spotify-connect` i skopiuj do niego: `deploy/synology/compose.yaml`
+2. Utwórz folder `/volume1/docker/onkyo-dlna-bridge` i skopiuj do niego: `deploy/synology/compose.yaml`
    → `compose.yaml`, cały folder `image/` → `image/`, `soloist.env.example` → `soloist.env`.
 3. Uzupełnij `soloist.env`: klucz API, `RENDERER_IP`, `DEVICE_NAME`, `PUID`/`PGID` (zwykle `1026`/`100`,
    sprawdzisz przez SSH poleceniem `id`) i zalecane na Synology `HOST_IP` (adres NAS w LAN).
@@ -220,7 +226,8 @@ Wszystkie ustawienia są w `soloist.env` (pełne komentarze w [soloist.env.examp
 | `HOST_IP` | auto | Adres IP hosta w LAN (ustaw, jeśli host ma kilka sieci) |
 | `PUID` / `PGID` | `1000` / `1000` | Właściciel `./config` (Synology: zwykle `1026` / `100`) |
 | `STREAM_PORT` | `5901` | Port TCP, z którego amplituner pobiera dźwięk – **otwórz w zaporze** |
-| `SWYH_PORT` | `5911` | Wewnętrzny port przechwytywania dźwięku |
+| `STREAM_ALLOW` | `renderer` | Kto może pobrać strumień: `renderer` (tylko `RENDERER_IP`), lista adresów/podsieci albo pusto (każdy w LAN) |
+| `SWYH_PORT` | `5911` | Wewnętrzny port przechwytywania dźwięku (tylko localhost) |
 | `INITIAL_VOLUME` | `70` | Początkowa (cyfrowa) głośność Spotify |
 | `META_UPDATE` | `yes` | Tytuł/wykonawca na wyświetlaczu (2–4 s przerwy na początku utworu); `no` = bez przerw, stały `PLAY_TITLE` |
 | `PLAY_TITLE` | `Spotify` | Tekst na wyświetlaczu, gdy nie są wysyłane metadane |
@@ -272,8 +279,12 @@ Więcej (po angielsku): [docs/troubleshooting.md](docs/troubleshooting.md).
 
 ## Kwestie prawne
 
-- Ten projekt **nie jest powiązany ze Spotify ani z Onkyo, nie jest przez nie wspierany ani zatwierdzony**.
-  „Spotify” i „Onkyo” są znakami towarowymi ich właścicieli.
+- Ten projekt **nie jest powiązany ze Spotify ani z Onkyo, nie jest przez nie wspierany, sponsorowany ani
+  certyfikowany**. „Spotify”, „Spotify Connect”, „Spotify Soloist” i „Onkyo” są znakami towarowymi ich
+  właścicieli i są tu używane wyłącznie do opisania zgodności. Nie używamy logo ani elementów marki Spotify.
+- **Wyłącznie do prywatnego, niekomercyjnego użytku**, zgodnie z warunkami Spotify dla deweloperów. Projekt
+  nie nagrywa, nie zapisuje i nie udostępnia żadnych treści Spotify: dźwięk jest przesyłany na żywo, tylko do
+  Twojego amplitunera (domyślnie `STREAM_ALLOW=renderer`).
 - **Spotify Soloist nie jest tu rozpowszechniany.** Kontener pobiera go z oficjalnego CDN Spotify przy
   uruchomieniu; jego używanie podlega warunkom Spotify akceptowanym przy generowaniu klucza API
   (zob. [dokumentację Spotify Soloist](https://developer.spotify.com/documentation/soloist)).

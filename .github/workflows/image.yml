@@ -1,5 +1,5 @@
 # Builds the container image for amd64 and arm64 on native GitHub runners and
-# publishes a multi-arch image to GitHub Container Registry (ghcr.io/<owner>/onkyo-spotify-connect).
+# publishes a multi-arch image to GitHub Container Registry (ghcr.io/<owner>/onkyo-dlna-bridge).
 # The image never contains Spotify Soloist - it is downloaded at container start.
 name: image
 
@@ -15,7 +15,7 @@ permissions:
   packages: write
 
 env:
-  IMAGE: ghcr.io/${{ github.repository_owner }}/onkyo-spotify-connect
+  IMAGE: ghcr.io/${{ github.repository_owner }}/onkyo-dlna-bridge
 
 jobs:
   build:

@@ -22,7 +22,7 @@ it. It has two layers:
 | Devices **without** a DLNA renderer (DLNA *client/player* only, AirPlay-only, Chromecast-only) | Will not work | – |
 
 All of this except the first row is **untested** — please report results in the
-[issues](https://github.com/lisek84/onkyo-spotify-connect/issues).
+[issues](https://github.com/lisek84/onkyo-dlna-bridge/issues).
 
 ## With `ONKYO_EISCP=no`
 
@@ -46,7 +46,7 @@ Not available:
   `GetProtocolInfo` sink list; most hi-fi renderers include `audio/L16`. MP3/AAC transcoding is not
   implemented (yet).
 - It must be able to open a TCP connection to the host on `STREAM_PORT` (firewall, see
-  [networking.md](networking.md)).
+  [networking.md](networking.md)) from the IP set in `RENDERER_IP` (or one listed in `STREAM_ALLOW`).
 
 ## Known differences between renderers
 

@@ -6,8 +6,8 @@ Any Linux host in the same LAN as the receiver: a mini PC, a home server, a Rasp
 ## Docker (x86_64)
 
 ```bash
-git clone https://github.com/lisek84/onkyo-spotify-connect.git
-cd onkyo-spotify-connect
+git clone https://github.com/lisek84/onkyo-dlna-bridge.git
+cd onkyo-dlna-bridge
 cp soloist.env.example soloist.env && nano soloist.env
 docker compose up -d --build
 docker compose logs -f
@@ -43,16 +43,16 @@ the host; if the device does not appear in Spotify, try rootful (`sudo podman â€
 
 ### Podman Quadlet (systemd service)
 
-`deploy/podman/onkyo-spotify-connect.container` is a Quadlet unit:
+`deploy/podman/onkyo-dlna-bridge.container` is a Quadlet unit:
 
 ```bash
-sudo mkdir -p /opt/onkyo-spotify-connect/config
-sudo cp soloist.env /opt/onkyo-spotify-connect/
-sudo podman build -t localhost/onkyo-spotify-connect:latest -f image/Dockerfile image   # Dockerfile.arm on ARM
-sudo cp deploy/podman/onkyo-spotify-connect.container /etc/containers/systemd/
+sudo mkdir -p /opt/onkyo-dlna-bridge/config
+sudo cp soloist.env /opt/onkyo-dlna-bridge/
+sudo podman build -t localhost/onkyo-dlna-bridge:latest -f image/Dockerfile image   # Dockerfile.arm on ARM
+sudo cp deploy/podman/onkyo-dlna-bridge.container /etc/containers/systemd/
 sudo systemctl daemon-reload
-sudo systemctl start onkyo-spotify-connect
-journalctl -u onkyo-spotify-connect -f
+sudo systemctl start onkyo-dlna-bridge
+journalctl -u onkyo-dlna-bridge -f
 ```
 
 On SELinux systems the `:Z` volume option relabels the config directory.

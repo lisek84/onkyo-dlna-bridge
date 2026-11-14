@@ -6,8 +6,8 @@
 |---|---|
 | **PulseAudio** | Provides a virtual output `dlna` (null sink, 44.1 kHz / 16 bit / stereo). |
 | **Spotify Soloist** | Official Spotify Connect receiver. Plays into the `dlna` sink. Local WebSocket API is used via `soloist ctl` for status, metadata and pause/play. |
-| **swyh-rs-cli** | Captures the sink monitor and serves it as an LPCM HTTP stream on `SWYH_PORT` (serve-only mode, started only while Spotify plays). |
-| **dlna-proxy.py** | Serves the stream to the receiver on `STREAM_PORT` in the form legacy renderers expect. |
+| **swyh-rs-cli** | Captures the sink monitor and serves it as an LPCM HTTP stream on `127.0.0.1:SWYH_PORT` (serve-only mode, started only while Spotify plays). |
+| **dlna-proxy.py** | Serves the stream to the receiver on `STREAM_PORT` in the form legacy renderers expect; by default only to `RENDERER_IP` (`STREAM_ALLOW`). Nothing is recorded or stored. |
 | **amp-ctl.py** | Controls the receiver: UPnP AVTransport (Stop / SetAVTransportURI with DIDL metadata / Play / state) and eISCP (power, NET input, DLNA service). |
 | **iscp-events.py** | Persistent eISCP connection; reports NET button presses and power-off. |
 | **watcher** (in `entrypoint.sh`) | State machine tying it together, polls Soloist and the renderer every 2 s. |

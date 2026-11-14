@@ -1,4 +1,4 @@
-# onkyo-spotify-connect - x86_64 (amd64) image
+# onkyo-dlna-bridge - x86_64 (amd64) image
 #   Spotify Soloist (official Spotify Connect receiver) -> PulseAudio null sink
 #   -> swyh-rs-cli -> HTTP proxy -> DLNA renderer of a network receiver (LPCM 44.1 kHz / 16 bit)
 #
@@ -15,11 +15,11 @@ FROM debian:trixie-slim
 
 ARG SWYH_VERSION=1.21.1
 
-LABEL org.opencontainers.image.title="onkyo-spotify-connect" \
+LABEL org.opencontainers.image.title="onkyo-dlna-bridge" \
       org.opencontainers.image.description="Spotify Connect for legacy Onkyo network receivers via Spotify Soloist and DLNA" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.authors="Lisek (lisek84)" \
-      org.opencontainers.image.source="https://github.com/lisek84/onkyo-spotify-connect"
+      org.opencontainers.image.source="https://github.com/lisek84/onkyo-dlna-bridge"
 
 RUN apt-get update \
  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \

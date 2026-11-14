@@ -1,17 +1,21 @@
-# onkyo-spotify-connect
+# onkyo-dlna-bridge
 
 **English** | [Polski](README.pl.md)
 
-[![image](https://github.com/lisek84/onkyo-spotify-connect/actions/workflows/image.yml/badge.svg)](https://github.com/lisek84/onkyo-spotify-connect/actions/workflows/image.yml)
+[![image](https://github.com/lisek84/onkyo-dlna-bridge/actions/workflows/image.yml/badge.svg)](https://github.com/lisek84/onkyo-dlna-bridge/actions/workflows/image.yml)
 
-**Spotify Connect for legacy Onkyo network receivers** (2010–2013 era, e.g. TX-NR609) whose
-built-in Spotify client died when Spotify shut down libspotify.
+**Play Spotify on legacy Onkyo network receivers again** (2010–2013 era, e.g. TX-NR609) whose built-in
+Spotify feature stopped working when Spotify retired its old libspotify SDK.
 
-A small container on your NAS, Raspberry Pi or Linux box becomes a Spotify Connect device
-(using **Spotify Soloist**, Spotify's own official receiver). It streams the audio to the
-receiver's built-in DLNA renderer, so you pick *"Onkyo Receiver"* in the Spotify app and it plays
-on your amplifier — with title and artist on the front display, the album cover on the TV, automatic
-power-on and input switching, and the remote's **Stop** / **NET** buttons mapped to pause / resume.
+A small container on your NAS, Raspberry Pi or Linux box runs **Spotify Soloist** — Spotify's own,
+official headless client — and bridges its audio to the receiver's built-in DLNA renderer. In the Spotify
+app you pick *"Onkyo Receiver"* from the device list and it plays on your amplifier — with title and artist
+on the front display, the album cover on the TV, automatic power-on and input switching, and the remote's
+**Stop** / **NET** buttons mapped to pause / resume.
+
+> This is an independent hobby project. It is **not affiliated with, endorsed by or certified by Spotify**
+> (the receiver does not become a certified "Spotify Connect" device) **or Onkyo**. Personal, non-commercial
+> use only.
 
 ## What it looks like
 
@@ -51,14 +55,16 @@ replacement, nothing: the Spotify entry in the menu just quietly stopped working
 Thousands of good devices were downgraded overnight by a decision made somewhere else, and that annoyed me
 enough to do something about it.
 
-I did not want a solution that hacks the receiver or abuses Spotify. So this project deliberately stays
-**on the legal side**:
+I wanted a solution that respects both the device and Spotify's rules, so this project deliberately uses
+only official building blocks:
 
-- It uses **Spotify Soloist, Spotify's own official Spotify Connect client**, with your own developer API
-  key and your own Premium account — no reverse-engineered Spotify client, no circumvention of anything.
-- Soloist is **not redistributed**; it is downloaded from Spotify's official CDN, as Spotify requires.
+- It uses **Spotify Soloist, Spotify's own official client**, with your own developer API key — no
+  reverse-engineered Spotify client, no circumvention of anything.
+- Soloist is **not redistributed**; each installation downloads it from Spotify's official CDN, as Spotify asks.
+- The audio goes **only to your own receiver** in your home network (by default the stream is refused to any
+  other device) and is **never recorded or stored**.
 - The receiver is driven only through the **interfaces it officially offers** on the network (DLNA renderer
-  and Onkyo's documented eISCP control protocol). Its firmware is not touched.
+  and Onkyo's eISCP control protocol). Its firmware is not touched.
 
 If you have an old receiver whose streaming features were abandoned the same way, I hope this gives it a
 second life too.
@@ -75,7 +81,7 @@ Details: [docs/how-it-works.md](docs/how-it-works.md).
 
 ## Features
 
-- Shows up as a normal **Spotify Connect** device (official Spotify Soloist, no reverse-engineered client)
+- Appears in the Spotify app's device list via the official **Spotify Soloist** client (no reverse-engineered client)
 - Lossless **LPCM 44.1 kHz / 16 bit** stream to the receiver (natively supported by these DMRs)
 - **Powers the receiver on** and switches it to NET → DLNA when you start playback
 - **Title / artist / album** on the receiver display and **album cover** on the TV (receiver OSD via HDMI), updated on every track change
@@ -96,11 +102,12 @@ Details: [docs/how-it-works.md](docs/how-it-works.md).
 Other Onkyo / Integra network receivers of the same generation, and DLNA renderers of other brands,
 are expected to work — fully or partially, see [docs/compatibility.md](docs/compatibility.md) — but are
 untested. Reports (working or not) are welcome in the
-[issues](https://github.com/lisek84/onkyo-spotify-connect/issues).
+[issues](https://github.com/lisek84/onkyo-dlna-bridge/issues).
 
 ## Requirements
 
-- **Spotify Premium** account and a free **Spotify Soloist API key** → [docs/spotify-developer-key.md](docs/spotify-developer-key.md)
+- A free **Spotify Soloist API key**, created by a **Spotify Premium** account (once running, Free and Premium
+  users can play to it) → [docs/spotify-developer-key.md](docs/spotify-developer-key.md)
 - A host in the **same LAN** as the receiver with Docker or Podman, **host networking**, and ~100 MB RAM
   (x86_64, arm64 or armv7; glibc-based image, Debian trixie)
 - The receiver with network enabled, a fixed IP, and two settings checked → [docs/receiver-setup.md](docs/receiver-setup.md)
@@ -110,8 +117,8 @@ untested. Reports (working or not) are welcome in the
 ## Quick start (Docker / Podman on Linux)
 
 ```bash
-git clone https://github.com/lisek84/onkyo-spotify-connect.git
-cd onkyo-spotify-connect
+git clone https://github.com/lisek84/onkyo-dlna-bridge.git
+cd onkyo-dlna-bridge
 cp soloist.env.example soloist.env
 nano soloist.env            # SOLOIST_API_KEY, RENDERER_IP, DEVICE_NAME, PUID/PGID
 docker compose up -d --build   # Raspberry Pi: set dockerfile: Dockerfile.arm in compose.yaml first
@@ -122,8 +129,8 @@ Open Spotify on your phone → **Devices** → pick your `DEVICE_NAME` → play.
 The first connection logs Soloist into your account; afterwards it reconnects on its own.
 
 **Prebuilt image (optional):** the GitHub Actions workflow publishes a multi-arch image (amd64, arm64) to
-`ghcr.io/lisek84/onkyo-spotify-connect`. To use it instead of building locally, replace the `build:` block in
-`compose.yaml` with `image: ghcr.io/lisek84/onkyo-spotify-connect:latest`.
+`ghcr.io/lisek84/onkyo-dlna-bridge`. To use it instead of building locally, replace the `build:` block in
+`compose.yaml` with `image: ghcr.io/lisek84/onkyo-dlna-bridge:latest`.
 
 Platform guides:
 
@@ -143,7 +150,8 @@ All settings live in `soloist.env` (see [soloist.env.example](soloist.env.exampl
 | `HOST_IP` | auto | LAN IP of the host (set it if the host has several networks) |
 | `PUID` / `PGID` | `1000` / `1000` | Owner of `./config` (Synology: typically `1026` / `100`) |
 | `STREAM_PORT` | `5901` | TCP port the receiver pulls audio from — **open it in the firewall** |
-| `SWYH_PORT` | `5911` | Internal capture port |
+| `STREAM_ALLOW` | `renderer` | Who may fetch the stream: `renderer` (only `RENDERER_IP`), a list of IPs/subnets, or empty (anyone in the LAN) |
+| `SWYH_PORT` | `5911` | Internal capture port (localhost only) |
 | `INITIAL_VOLUME` | `70` | Initial Spotify digital volume |
 | `META_UPDATE` | `yes` | Title/artist on the display (2–4 s gap at each track start); `no` = gapless, fixed `PLAY_TITLE` |
 | `PLAY_TITLE` | `Spotify` | Display text when no metadata is sent |
@@ -182,8 +190,12 @@ Use the Spotify app for skipping tracks.
 
 ## Legal
 
-- This project is **not affiliated with, endorsed by, or supported by Spotify or Onkyo**.
-  "Spotify" and "Onkyo" are trademarks of their respective owners.
+- This project is **not affiliated with, endorsed by, sponsored by, or certified by Spotify or Onkyo**.
+  "Spotify", "Spotify Connect", "Spotify Soloist" and "Onkyo" are trademarks of their respective owners and are
+  used here only to describe compatibility. No Spotify logos or brand assets are used.
+- **Personal, non-commercial use only**, as required by the Spotify developer terms. The project does not
+  record, store or share any Spotify content: audio is streamed live, only to your own receiver
+  (`STREAM_ALLOW=renderer` by default).
 - **Spotify Soloist is not distributed here.** The container downloads it from Spotify's official CDN at
   runtime; its use is governed by the Spotify terms you accept when generating the API key
   (see the [Spotify Soloist documentation](https://developer.spotify.com/documentation/soloist)).

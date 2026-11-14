@@ -1,26 +1,26 @@
 # Podman Quadlet unit (systemd-managed container), rootful or rootless.
 #
 #   1. Build the image from the repository root:
-#        podman build -t localhost/onkyo-spotify-connect:latest -f image/Dockerfile image
+#        podman build -t localhost/onkyo-dlna-bridge:latest -f image/Dockerfile image
 #      (Dockerfile.arm on ARM)
 #   2. Copy this file to /etc/containers/systemd/ (rootful) or
 #      ~/.config/containers/systemd/ (rootless), adjust the paths below.
-#   3. systemctl daemon-reload && systemctl start onkyo-spotify-connect
+#   3. systemctl daemon-reload && systemctl start onkyo-dlna-bridge
 #      (rootless: systemctl --user ..., plus "loginctl enable-linger $USER")
 #
 # See docs/linux.md.
 
 [Unit]
-Description=onkyo-spotify-connect (Spotify Soloist -> DLNA receiver)
+Description=onkyo-dlna-bridge (Spotify Soloist -> DLNA receiver)
 Wants=network-online.target
 After=network-online.target
 
 [Container]
-Image=localhost/onkyo-spotify-connect:latest
-ContainerName=onkyo-spotify-connect
+Image=localhost/onkyo-dlna-bridge:latest
+ContainerName=onkyo-dlna-bridge
 Network=host
-EnvironmentFile=/opt/onkyo-spotify-connect/soloist.env
-Volume=/opt/onkyo-spotify-connect/config:/config:Z
+EnvironmentFile=/opt/onkyo-dlna-bridge/soloist.env
+Volume=/opt/onkyo-dlna-bridge/config:/config:Z
 
 [Service]
 Restart=always
