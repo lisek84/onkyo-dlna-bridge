@@ -59,7 +59,8 @@ Found on an Onkyo TX-NR609 (Mediabolic DMR/IMHTTP 1.8.x, 2011):
 
 ## Album cover
 
-Soloist reports cover URLs on Spotify's image CDN (`i.scdn.co`, 64/300/640 px). The 300 px URL is put into
+Soloist reports cover URLs on Spotify's image CDN (`i.scdn.co`, 64/300/640 px). The size chosen by `COVER_SIZE`
+(default 300 px; the TX-NR609 also accepts 640 px but downscales it, so it looks no better there) is put into
 `upnp:albumArtURI` (`dlna:profileID="JPEG_TN"`, the same form the official Onkyo Remote app uses — it sends
 full-size covers too). The URL is rewritten from `https` to `http`: the CDN serves identical files over
 plain HTTP and a 2011 receiver may not handle current TLS. The receiver downloads the image itself, so it needs

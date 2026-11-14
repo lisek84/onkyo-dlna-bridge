@@ -156,6 +156,7 @@ All settings live in `soloist.env` (see [soloist.env.example](soloist.env.exampl
 | `META_UPDATE` | `yes` | Title/artist on the display (2–4 s gap at each track start); `no` = gapless, fixed `PLAY_TITLE` |
 | `PLAY_TITLE` | `Spotify` | Display text when no metadata is sent |
 | `COVER_ART` | `yes` | Send the album cover (shown on the TV through the receiver's on-screen display) |
+| `COVER_SIZE` | `default` | Cover size: `default` (300 px), `large` (640 px), `small` (64 px) |
 | `ONKYO_EISCP` | `yes` | Use the Onkyo eISCP protocol; `no` for non-Onkyo renderers |
 | `AUTO_POWER_ON` | `yes` | Power the receiver on when playback starts |
 | `REMOTE_CONTROL` | `yes` | Remote Stop → pause, NET → resume, power off → pause |

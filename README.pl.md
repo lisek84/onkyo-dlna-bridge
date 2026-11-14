@@ -232,6 +232,7 @@ Wszystkie ustawienia są w `soloist.env` (pełne komentarze w [soloist.env.examp
 | `META_UPDATE` | `yes` | Tytuł/wykonawca na wyświetlaczu (2–4 s przerwy na początku utworu); `no` = bez przerw, stały `PLAY_TITLE` |
 | `PLAY_TITLE` | `Spotify` | Tekst na wyświetlaczu, gdy nie są wysyłane metadane |
 | `COVER_ART` | `yes` | Wysyłaj okładkę albumu (widoczna na telewizorze przez menu ekranowe amplitunera) |
+| `COVER_SIZE` | `default` | Rozmiar okładki: `default` (300 px), `large` (640 px), `small` (64 px) |
 | `ONKYO_EISCP` | `yes` | Używaj protokołu Onkyo eISCP; `no` dla odtwarzaczy innych niż Onkyo |
 | `AUTO_POWER_ON` | `yes` | Włączaj amplituner, gdy zaczyna się odtwarzanie |
 | `REMOTE_CONTROL` | `yes` | Pilot: Stop → pauza, NET → wznowienie, wyłączenie → pauza |

@@ -9,7 +9,7 @@
 #   - maps the receiver remote: Stop -> pause Spotify, NET -> resume, power off -> pause.
 set -euo pipefail
 
-VERSION="1.2.1"
+VERSION="1.3.0"
 
 # ---------------------------------------------------------------- configuration --
 : "${PUID:=1000}"                       # user/group that owns /config
@@ -25,6 +25,8 @@ VERSION="1.2.1"
 : "${SWYH_PORT:=5911}"                  # internal swyh-rs port (read only by the proxy)
 : "${PLAY_TITLE:=Spotify}"              # display text when no track metadata is sent
 : "${COVER_ART:=yes}"                   # yes = send the album cover with the metadata (shown on the TV/OSD)
+: "${COVER_SIZE:=default}"              # cover size from Spotify: default (300 px), large (640 px), small (64 px)
+export COVER_SIZE
 : "${META_UPDATE:=yes}"                 # yes = show title/artist, refreshed on every track change
 : "${ONKYO_EISCP:=yes}"                 # yes = Onkyo/Integra/Pioneer eISCP control (power, input, remote)
 : "${AUTO_POWER_ON:=yes}"               # yes = power the receiver on when Spotify starts playing
@@ -325,7 +327,7 @@ watcher &
 WATCH_PID=$!
 
 log "started: pulseaudio=$PA_PID soloist=$SOLOIST_PID proxy=$PROXY_PID eiscp=${ISCP_PID:-off} watcher=$WATCH_PID"
-log "receiver=$RENDERER_IP host=$HOST_IP stream=$STREAM_URL eiscp=$ONKYO_EISCP auto_power_on=$AUTO_POWER_ON remote=$REMOTE_CONTROL metadata=$META_UPDATE cover=$COVER_ART stream_allow=${STREAM_ALLOW:-anyone}"
+log "receiver=$RENDERER_IP host=$HOST_IP stream=$STREAM_URL eiscp=$ONKYO_EISCP auto_power_on=$AUTO_POWER_ON remote=$REMOTE_CONTROL metadata=$META_UPDATE cover=$COVER_ART/$COVER_SIZE stream_allow=${STREAM_ALLOW:-anyone}"
 
 # If PulseAudio, Soloist or the proxy exits, exit too and let the restart policy restart
 # the container (this also fetches a fresh Soloist build after expiry, exit code 10).

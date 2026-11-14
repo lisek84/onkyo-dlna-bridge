@@ -14,6 +14,7 @@ and Spotify's image CDN serves the same files over http.
 The format is not documented, so there is a heuristic fallback for other layouts.
 """
 import json
+import os
 import sys
 
 SEP = "\x1f"
@@ -73,10 +74,14 @@ def known_layout(data):
     return title, artist, album
 
 
+COVER_SIZE = os.environ.get("COVER_SIZE", "default")   # small (64 px) | default (300 px) | large (640 px)
+
+
 def cover_url(data):
     covers = dig(data, "item", "decorations", "visual_identity", "cover") or []
     by_size = {c.get("size"): c.get("url") for c in covers if isinstance(c, dict)}
-    url = by_size.get("default") or by_size.get("small") or next(iter(by_size.values()), "") or ""
+    url = (by_size.get(COVER_SIZE) or by_size.get("default") or by_size.get("large")
+           or by_size.get("small") or next(iter(by_size.values()), "") or "")
     if url.startswith("https://i.scdn.co/"):
         url = "http://" + url[len("https://"):]
     return url

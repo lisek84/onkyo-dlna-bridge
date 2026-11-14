@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0
+
+- New `COVER_SIZE`: album cover size sent to the renderer - `default` (300 px, unchanged default), `large` (640 px)
+  or `small` (64 px). The TX-NR609 accepts 640 px but downscales it itself, so it brings no visible gain there.
+
 ## 1.2.1
 
 - Fix: titles/artists with `&`, `<`, `>` were shown as `&amp;` etc. on Onkyo receivers (their DMR does not
