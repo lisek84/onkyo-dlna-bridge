@@ -4,14 +4,22 @@
 
 [![image](https://github.com/lisek84/onkyo-dlna-bridge/actions/workflows/image.yml/badge.svg)](https://github.com/lisek84/onkyo-dlna-bridge/actions/workflows/image.yml)
 
-**Spotify znów na starszych amplitunerach sieciowych Onkyo** (z lat ok. 2010–2013, np. TX-NR609), których
-wbudowana funkcja Spotify przestała działać, gdy Spotify wycofało swoją starą bibliotekę libspotify.
+**Spotify na sprzęcie audio, który nie ma własnego (działającego) Spotify** – na dowolnym
+**odtwarzaczu DLNA/UPnP (renderer)**: amplitunerach, odtwarzaczach sieciowych, telewizorach, Kodi… Projekt
+powstał dla starszych **amplitunerów sieciowych Onkyo** (z lat ok. 2010–2013, np. TX-NR609), których
+wbudowane Spotify przestało działać, gdy Spotify wycofało starą bibliotekę libspotify – i z urządzeniami
+Onkyo / Integra współpracuje najpełniej.
 
 Mały kontener na NAS-ie, Raspberry Pi albo dowolnym komputerze z Linuksem uruchamia **Spotify Soloist** –
-oficjalnego klienta od samego Spotify – i przekazuje dźwięk do wbudowanego w amplituner odtwarzacza DLNA.
-W aplikacji Spotify wybierasz z listy urządzeń *„Onkyo Receiver”* i muzyka gra z amplitunera – z tytułem
-i wykonawcą na wyświetlaczu, okładką albumu na telewizorze, automatycznym włączaniem i przełączaniem
-wejścia, a przyciski **Stop** / **NET** na pilocie działają jako pauza / wznowienie.
+oficjalnego klienta od samego Spotify – i przesyła dźwięk do odtwarzacza DLNA urządzenia. W aplikacji
+Spotify wybierasz urządzenie z listy i muzyka gra właśnie tam, z tytułem, wykonawcą, albumem i okładką
+przesyłanymi przy każdym utworze.
+
+Na amplitunerach **Onkyo / Integra** (sterowanie eISCP) dodatkowo włącza amplituner i przełącza wejście,
+pokazuje utwór na wyświetlaczu i okładkę na telewizorze, obsługuje przyciski **Stop** / **NET** / wyłączania
+na pilocie, a opcjonalnie synchronizuje głośność, przywraca poprzednie wejście i wyłącza amplituner. Na
+innych urządzeniach działa odtwarzanie i zwykle informacje o utworze – zob.
+**[docs/compatibility.md](docs/compatibility.md)** (po angielsku).
 
 > To niezależny projekt hobbystyczny. **Nie jest powiązany ze Spotify, wspierany ani certyfikowany przez
 > Spotify** (amplituner nie staje się certyfikowanym urządzeniem „Spotify Connect”) **ani przez Onkyo**.
@@ -38,13 +46,6 @@ przełączanie utworów) zostaje w aplikacji Spotify, której i tak używasz.
 
 Bez modyfikowania firmware'u i bez żadnych „hacków” na amplitunerze: wykorzystywane są wyłącznie jego
 oficjalne interfejsy sieciowe (UPnP/DLNA oraz protokół sterowania Onkyo eISCP).
-
-> **Nie tylko dla Onkyo.** Nazwa pochodzi od amplitunera, dla którego projekt powstał, ale podstawowa część
-> działa z praktycznie każdym **odtwarzaczem DLNA/UPnP (renderer)**, który przyjmuje strumień LPCM – innymi
-> amplitunerami, odtwarzaczami sieciowymi, telewizorami, Kodi… Dodatki specyficzne dla Onkyo (włączanie,
-> przełączanie wejścia, obsługa pilota) wymagają urządzenia Onkyo / Integra (eISCP); na innych działa
-> odtwarzanie i zwykle informacje o utworze. Szczegóły: **[docs/compatibility.md](docs/compatibility.md)**
-> (po angielsku).
 
 ## Dlaczego ten projekt powstał
 
@@ -83,15 +84,23 @@ Szczegóły (po angielsku): [docs/how-it-works.md](docs/how-it-works.md). Dokume
 
 ## Funkcje
 
+**Z dowolnym odtwarzaczem DLNA / UPnP**
+
 - Widoczny na liście urządzeń w aplikacji Spotify dzięki oficjalnemu klientowi **Spotify Soloist** (bez klientów z inżynierii wstecznej)
-- Bezstratny strumień **LPCM 44,1 kHz / 16 bit** do amplitunera (natywnie obsługiwany przez te odtwarzacze DLNA)
-- **Włącza amplituner** i przełącza go na NET → DLNA, gdy zaczynasz odtwarzanie
-- **Tytuł / wykonawca / album** na wyświetlaczu amplitunera i **okładka albumu** na telewizorze (menu ekranowe
-  amplitunera przez HDMI), aktualizowane przy każdej zmianie utworu
-- Pilot amplitunera: **Stop** pauzuje Spotify, **NET** wznawia, **wyłączenie amplitunera** pauzuje Spotify
-- Obchodzi problemy starego oprogramowania odtwarzacza DLNA (błąd UPnP 705 „Transport is locked”,
-  sprawdzanie strumienia zapytaniami Range)
+- Bezstratny strumień **LPCM 44,1 kHz / 16 bit**, udostępniany tylko skonfigurowanemu odtwarzaczowi
+- **Tytuł / wykonawca / album** i **okładka** przesyłane przy każdej zmianie utworu (podcasty: nazwa podcastu)
 - Soloist jest pobierany z CDN Spotify przy starcie i **aktualizowany automatycznie** (buildy wygasają po 90 dniach)
+
+**Dodatki na amplitunerach Onkyo / Integra (eISCP)**
+
+- **Włącza amplituner** i przełącza go na NET → DLNA, gdy zaczynasz odtwarzanie; utwór na wyświetlaczu,
+  okładka na telewizorze (menu ekranowe amplitunera przez HDMI)
+- Pilot: **Stop** pauzuje Spotify, **NET** wznawia (opcjonalnie: następny utwór w trakcie grania),
+  **wyłączenie amplitunera** pauzuje Spotify (opcjonalnie: oddaje odtwarzanie telefonowi)
+- Opcjonalnie: suwak głośności w Spotify ↔ głośność amplitunera, głośność startowa, powrót do poprzedniego
+  wejścia, automatyczne przejście w standby
+- Obchodzi problemy starego oprogramowania odtwarzacza DLNA (błąd UPnP 705 „Transport is locked”,
+  sprawdzanie strumienia zapytaniami Range, metadane)
 
 ## Stan / przetestowany sprzęt
 
@@ -103,9 +112,8 @@ Szczegóły (po angielsku): [docs/how-it-works.md](docs/how-it-works.md). Dokume
 | Raspberry Pi / ARM (`Dockerfile.arm`) | **nietestowane** – swyh-rs jest kompilowany ze źródeł |
 | Windows (WSL2) | **eksperymentalnie / nietestowane** – zob. [docs/windows.md](docs/windows.md) |
 
-Inne amplitunery sieciowe Onkyo / Integra tej samej generacji oraz odtwarzacze DLNA innych marek powinny
-działać – w pełni albo częściowo, zob. [docs/compatibility.md](docs/compatibility.md) – ale nie były
-testowane. Zgłoszenia (czy działa, czy nie) mile widziane w
+Odtwarzacze DLNA innych marek oraz inne amplitunery Onkyo / Integra powinny działać – w pełni albo
+częściowo, zob. [docs/compatibility.md](docs/compatibility.md) – ale nie były jeszcze testowane. Zgłoszenia (czy działa, czy nie) mile widziane w
 [issues](https://github.com/lisek84/onkyo-dlna-bridge/issues).
 
 ## Wymagania

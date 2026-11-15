@@ -4,14 +4,20 @@
 
 [![image](https://github.com/lisek84/onkyo-dlna-bridge/actions/workflows/image.yml/badge.svg)](https://github.com/lisek84/onkyo-dlna-bridge/actions/workflows/image.yml)
 
-**Play Spotify on legacy Onkyo network receivers again** (2010–2013 era, e.g. TX-NR609) whose built-in
-Spotify feature stopped working when Spotify retired its old libspotify SDK.
+**Play Spotify on network audio devices that have no (working) Spotify of their own** – any
+**DLNA/UPnP media renderer**: AV receivers, network players, smart TVs, Kodi … It was built for legacy
+**Onkyo network receivers** (2010–2013 era, e.g. TX-NR609), whose built-in Spotify stopped working when
+Spotify retired its old libspotify SDK – and on Onkyo / Integra devices it integrates most deeply.
 
 A small container on your NAS, Raspberry Pi or Linux box runs **Spotify Soloist** — Spotify's own,
-official headless client — and bridges its audio to the receiver's built-in DLNA renderer. In the Spotify
-app you pick *"Onkyo Receiver"* from the device list and it plays on your amplifier — with title and artist
-on the front display, the album cover on the TV, automatic power-on and input switching, and the remote's
-**Stop** / **NET** buttons mapped to pause / resume.
+official headless client — and streams its audio to the device's DLNA renderer. In the Spotify app you pick
+the device from the device list and it plays there, with title, artist, album and cover sent with every track.
+
+On **Onkyo / Integra** receivers (eISCP control) it additionally switches the receiver on and to the right
+input, shows the track on the front display and the cover on the TV, maps the remote's **Stop** / **NET** /
+power buttons, and can optionally sync the volume, restore the previous input and switch the receiver off
+again. On other devices you get playback and, usually, track info — see
+**[docs/compatibility.md](docs/compatibility.md)**.
 
 > This is an independent hobby project. It is **not affiliated with, endorsed by or certified by Spotify**
 > (the receiver does not become a certified "Spotify Connect" device) **or Onkyo**. Personal, non-commercial
@@ -38,12 +44,6 @@ skipping) stays in the Spotify app you already use.
 
 No firmware modification, no hacks on the receiver: only its official network interfaces
 (UPnP/DLNA and the Onkyo eISCP control protocol) are used.
-
-> **Not only for Onkyo.** The name comes from the receiver it was built for, but the core works with
-> practically any **DLNA/UPnP media renderer** that accepts an LPCM stream — other receivers, network
-> players, smart TVs, Kodi … The Onkyo-specific extras (power-on, input switching, remote mapping) need an
-> Onkyo / Integra (eISCP) device; elsewhere you get playback and, usually, track info.
-> See **[docs/compatibility.md](docs/compatibility.md)**.
 
 ## Why this project exists
 
@@ -81,13 +81,22 @@ Details: [docs/how-it-works.md](docs/how-it-works.md). Technical reference of th
 
 ## Features
 
+**With any DLNA / UPnP renderer**
+
 - Appears in the Spotify app's device list via the official **Spotify Soloist** client (no reverse-engineered client)
-- Lossless **LPCM 44.1 kHz / 16 bit** stream to the receiver (natively supported by these DMRs)
-- **Powers the receiver on** and switches it to NET → DLNA when you start playback
-- **Title / artist / album** on the receiver display and **album cover** on the TV (receiver OSD via HDMI), updated on every track change
-- Receiver remote: **Stop** pauses Spotify, **NET** resumes, **switching the receiver off** pauses Spotify
-- Works around the legacy DMR firmware quirks (UPnP 705 "Transport is locked", Range probing)
+- Lossless **LPCM 44.1 kHz / 16 bit** stream, served only to the configured renderer
+- **Title / artist / album** and **cover** sent with every track change (podcasts: show name)
 - Soloist is downloaded from Spotify's CDN at start and **auto-updated** (builds expire after 90 days)
+
+**Extras on Onkyo / Integra receivers (eISCP)**
+
+- **Powers the receiver on** and switches it to NET → DLNA when you start playback; track on the front
+  display, cover on the TV (receiver OSD via HDMI)
+- Remote: **Stop** pauses Spotify, **NET** resumes (optionally: next track during playback), **switching the
+  receiver off** pauses Spotify (optionally: hands playback back to the phone)
+- Optional: Spotify volume slider ↔ receiver volume, start-up volume, back to the previous input, automatic
+  standby
+- Works around the legacy DMR firmware quirks (UPnP 705 "Transport is locked", Range probing, metadata)
 
 ## Status / tested hardware
 
@@ -99,9 +108,8 @@ Details: [docs/how-it-works.md](docs/how-it-works.md). Technical reference of th
 | Raspberry Pi / ARM (`Dockerfile.arm`) | **untested** – builds swyh-rs from source |
 | Windows (WSL2) | **experimental / untested** – see [docs/windows.md](docs/windows.md) |
 
-Other Onkyo / Integra network receivers of the same generation, and DLNA renderers of other brands,
-are expected to work — fully or partially, see [docs/compatibility.md](docs/compatibility.md) — but are
-untested. Reports (working or not) are welcome in the
+DLNA renderers of other brands and other Onkyo / Integra receivers are expected to work — fully or
+partially, see [docs/compatibility.md](docs/compatibility.md) — but are untested so far. Reports (working or not) are welcome in the
 [issues](https://github.com/lisek84/onkyo-dlna-bridge/issues).
 
 ## Requirements
