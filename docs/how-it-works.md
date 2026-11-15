@@ -122,6 +122,14 @@ the music keeps playing. With `NET_NEXT=yes` the container answers that with `so
 - Menu events caused by the container's own start sequence (NET input, DLNA service, Play) are ignored.
 - After a remote Stop, NET still resumes (`NET_RESUME_SECONDS`); the NET menu can then be used normally.
 
+## Switching the receiver off (`POWER_OFF_ACTION`)
+
+When the receiver goes from on to standby (`PWR01 → PWR00`), the container pauses Spotify and never switches the
+receiver back on by itself. With `POWER_OFF_ACTION=release` it additionally runs `soloist ctl deactivate`: the
+device gives up its Spotify Connect "active device" status, the app on the phone disconnects from the receiver and
+stays on the phone (paused). Soloist logs "no longer active device", so the container releases the receiver just
+like when playback is moved to another device.
+
 ## Files in `config/`
 
 | Path | Content |

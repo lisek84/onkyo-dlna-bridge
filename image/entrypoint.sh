@@ -33,6 +33,7 @@ export COVER_SIZE
 : "${REMOTE_CONTROL:=yes}"              # yes = remote Stop pauses Spotify, NET resumes, power off pauses
 : "${NET_RESUME_SECONDS:=120}"          # how long after a remote Stop the NET button resumes playback
 : "${NET_NEXT:=no}"                     # yes = NET during playback skips to the next track
+: "${POWER_OFF_ACTION:=pause}"          # receiver switched off: pause | release (hand back to the phone)
 # --- optional receiver integration (all off by default) ---
 : "${VOLUME_SYNC:=no}"                  # yes = Spotify volume slider <-> receiver master volume (both ways)
 : "${VOLUME_MAX:=50}"                   # receiver volume at 100 % in Spotify (hard limit for the slider)
@@ -304,14 +305,22 @@ watcher() {
     esac
     check_auto_off
 
-    # --- receiver switched off by the user -> pause Spotify, never power it back on ---
+    # --- receiver switched off by the user -> pause Spotify (or give up the device), never power it back on ---
     if [ -f /tmp/iscp-off ]; then
       off_ts=$(cut -d. -f1 /tmp/iscp-off 2>/dev/null)
       if [ -n "$off_ts" ] && [ "$off_ts" -gt "$off_seen" ]; then
         off_seen=$off_ts
         if [ "$REMOTE_CONTROL" = "yes" ] && { swyh_running || [ "$status" = "playing" ]; }; then
-          log "receiver switched off -> pausing Spotify"
-          [ "$status" = "playing" ] && sctl pause
+          if [ "$POWER_OFF_ACTION" = "release" ]; then
+            # give up the active device: the app disconnects from the receiver and stays on the phone
+            # (Soloist then logs "no longer active device" -> the inactive branch releases the receiver)
+            log "receiver switched off -> pausing Spotify and releasing the Spotify Connect device"
+            [ "$status" = "playing" ] && sctl pause
+            sctl deactivate
+          else
+            log "receiver switched off -> pausing Spotify"
+            [ "$status" = "playing" ] && sctl pause
+          fi
           user_stop=1; stop_ts=$play_seen; status=paused; last=paused; idle_since=$now
           off_hold=$((now + 15))
         fi
@@ -475,7 +484,7 @@ WATCH_PID=$!
 
 log "started: pulseaudio=$PA_PID soloist=$SOLOIST_PID proxy=$PROXY_PID eiscp=${ISCP_PID:-off} watcher=$WATCH_PID"
 log "receiver=$RENDERER_IP host=$HOST_IP stream=$STREAM_URL eiscp=$ONKYO_EISCP auto_power_on=$AUTO_POWER_ON remote=$REMOTE_CONTROL metadata=$META_UPDATE cover=$COVER_ART/$COVER_SIZE stream_allow=${STREAM_ALLOW:-anyone}"
-log "net_resume=${NET_RESUME_SECONDS}s net_next=$NET_NEXT volume_sync=$VOLUME_SYNC(max $VOLUME_MAX) power_on_volume=${POWER_ON_VOLUME:-keep} restore_input=$RESTORE_INPUT auto_power_off=${AUTO_POWER_OFF_MINUTES}min"
+log "net_resume=${NET_RESUME_SECONDS}s net_next=$NET_NEXT power_off=$POWER_OFF_ACTION volume_sync=$VOLUME_SYNC(max $VOLUME_MAX) power_on_volume=${POWER_ON_VOLUME:-keep} restore_input=$RESTORE_INPUT auto_power_off=${AUTO_POWER_OFF_MINUTES}min"
 
 # If PulseAudio, Soloist or the proxy exits, exit too and let the restart policy restart
 # the container (this also fetches a fresh Soloist build after expiry, exit code 10).

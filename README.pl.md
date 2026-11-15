@@ -237,6 +237,7 @@ Wszystkie ustawienia są w `soloist.env` (pełne komentarze w [soloist.env.examp
 | `AUTO_POWER_ON` | `yes` | Włączaj amplituner, gdy zaczyna się odtwarzanie |
 | `REMOTE_CONTROL` | `yes` | Pilot: Stop → pauza, NET → wznowienie, wyłączenie → pauza |
 | `NET_RESUME_SECONDS` | `120` | Jak długo po Stop przycisk NET wznawia odtwarzanie (NET otwiera też menu NET) |
+| `POWER_OFF_ACTION` | `pause` | Wyłączenie amplitunera: `pause` = pauza w Spotify, `release` = pauza i rozłączenie (aplikacja wraca na telefon) |
 | `NET_NEXT` | `no` | `yes` = NET w trakcie odtwarzania przełącza na następny utwór (menu NET: najpierw Stop) |
 | `VOLUME_SYNC` | `no` | Suwak głośności w Spotify ↔ głośność amplitunera, w obie strony |
 | `VOLUME_MAX` | `50` | Głośność amplitunera odpowiadająca 100 % w Spotify (twardy limit) |

@@ -4,6 +4,8 @@
 
 - `NET_NEXT=yes` (optional, off by default): NET pressed during playback skips to the next track. Stop -> NET still
   resumes; NET-menu events caused by the container's own start sequence are ignored.
+- `POWER_OFF_ACTION=release` (optional, default `pause`): switching the receiver off also disconnects the Spotify
+  app from the receiver (`soloist ctl deactivate`), so playback goes back to the phone.
 
 ## 1.4.2
 

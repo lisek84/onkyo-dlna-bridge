@@ -161,6 +161,7 @@ All settings live in `soloist.env` (see [soloist.env.example](soloist.env.exampl
 | `AUTO_POWER_ON` | `yes` | Power the receiver on when playback starts |
 | `REMOTE_CONTROL` | `yes` | Remote Stop → pause, NET → resume, power off → pause |
 | `NET_RESUME_SECONDS` | `120` | How long after Stop the NET button resumes (NET also opens the NET menu) |
+| `POWER_OFF_ACTION` | `pause` | Receiver switched off: `pause` Spotify, or `release` = pause and disconnect (the app goes back to the phone) |
 | `NET_NEXT` | `no` | `yes` = NET during playback skips to the next track (to open the NET menu, press Stop first) |
 | `VOLUME_SYNC` | `no` | Spotify volume slider ↔ receiver master volume, both ways |
 | `VOLUME_MAX` | `50` | Receiver volume at 100 % in Spotify (hard limit) |
