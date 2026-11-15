@@ -237,6 +237,7 @@ Wszystkie ustawienia są w `soloist.env` (pełne komentarze w [soloist.env.examp
 | `AUTO_POWER_ON` | `yes` | Włączaj amplituner, gdy zaczyna się odtwarzanie |
 | `REMOTE_CONTROL` | `yes` | Pilot: Stop → pauza, NET → wznowienie, wyłączenie → pauza |
 | `NET_RESUME_SECONDS` | `120` | Jak długo po Stop przycisk NET wznawia odtwarzanie (NET otwiera też menu NET) |
+| `NET_NEXT` | `no` | `yes` = NET w trakcie odtwarzania przełącza na następny utwór (menu NET: najpierw Stop) |
 | `VOLUME_SYNC` | `no` | Suwak głośności w Spotify ↔ głośność amplitunera, w obie strony |
 | `VOLUME_MAX` | `50` | Głośność amplitunera odpowiadająca 100 % w Spotify (twardy limit) |
 | `POWER_ON_VOLUME` | *(puste)* | Głośność ustawiana tylko wtedy, gdy to kontener włącza amplituner. **Puste = amplituner włącza się z taką głośnością, jaką zawsze miał** |
@@ -267,6 +268,7 @@ amplituner zachowuje swoją głośność.
 | Zmieniasz utwór w aplikacji Spotify | Gra dalej; wyświetlacz pokazuje nowy tytuł i okładkę (`META_UPDATE=yes`) |
 | **Stop** na pilocie amplitunera | Spotify się pauzuje |
 | **NET** na pilocie do 2 min po Stop | Spotify wznawia odtwarzanie (≈ 8 s do dźwięku) |
+| **NET** w trakcie odtwarzania (przy `NET_NEXT=yes`) | następny utwór (≈ 3 s) |
 | Wyłączasz amplituner | Spotify się pauzuje; amplituner **nie** zostanie z powrotem włączony |
 | Głośność na pilocie / w Spotify | Pilot = głośność amplitunera; suwak w Spotify = głośność strumienia, albo głośność amplitunera przy `VOLUME_SYNC=yes` |
 

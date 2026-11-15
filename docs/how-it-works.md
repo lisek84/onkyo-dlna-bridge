@@ -112,6 +112,16 @@ All off by default; they use the same eISCP commands as the official Onkyo Remot
   switched it on): after N minutes without Spotify, if it is still idle on NET (no internet radio etc.), it is
   put back into standby. If the user switches it off or uses another input meanwhile, nothing happens.
 
+## NET as "next track" (`NET_NEXT`)
+
+While our stream plays, pressing NET makes the receiver switch its screen to the NET top menu (eISCP `NLTF3…`) –
+the music keeps playing. With `NET_NEXT=yes` the container answers that with `soloist ctl next`; the next track's
+`SetAVTransportURI` + `Play` brings the playback screen back, so the following press is reported again.
+
+- A double press cannot be detected: while the screen already shows the NET menu, further NET presses send nothing.
+- Menu events caused by the container's own start sequence (NET input, DLNA service, Play) are ignored.
+- After a remote Stop, NET still resumes (`NET_RESUME_SECONDS`); the NET menu can then be used normally.
+
 ## Files in `config/`
 
 | Path | Content |

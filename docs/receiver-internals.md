@@ -167,7 +167,9 @@ playback starts.
 | CH ±, digits 1–9 | `NLT…My Favorites`, `NSTP` | switch to an internet-radio favourite |
 | Play, Pause, Next, Prev, FF, REW, ▲ ▼ ▶, Display, Dimmer, Mode | nothing | – |
 
-Arrow-key navigation also produces `NLTF3…` messages (with a different cursor position), so "NET pressed" and "menu
+Pressing NET while the DMR plays does **not** stop playback – only the screen changes to the NET menu (one `NLTF3…`
+message). Further NET presses while the menu is shown send nothing; the next `SetAVTransportURI` + `Play` returns the
+playback screen. Arrow-key navigation also produces `NLTF3…` messages (with a different cursor position), so "NET pressed" and "menu
 navigation" cannot be told apart reliably.
 
 ---

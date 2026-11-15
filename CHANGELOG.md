@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.0
+
+- `NET_NEXT=yes` (optional, off by default): NET pressed during playback skips to the next track. Stop -> NET still
+  resumes; NET-menu events caused by the container's own start sequence are ignored.
+
 ## 1.4.2
 
 - Fix: for items without an album (podcast episodes) the receiver showed the cover URL as the album – the Onkyo DMR

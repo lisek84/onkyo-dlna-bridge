@@ -9,7 +9,7 @@
 #   - maps the receiver remote: Stop -> pause Spotify, NET -> resume, power off -> pause.
 set -euo pipefail
 
-VERSION="1.4.2"
+VERSION="1.5.0"
 
 # ---------------------------------------------------------------- configuration --
 : "${PUID:=1000}"                       # user/group that owns /config
@@ -32,6 +32,7 @@ export COVER_SIZE
 : "${AUTO_POWER_ON:=yes}"               # yes = power the receiver on when Spotify starts playing
 : "${REMOTE_CONTROL:=yes}"              # yes = remote Stop pauses Spotify, NET resumes, power off pauses
 : "${NET_RESUME_SECONDS:=120}"          # how long after a remote Stop the NET button resumes playback
+: "${NET_NEXT:=no}"                     # yes = NET during playback skips to the next track
 # --- optional receiver integration (all off by default) ---
 : "${VOLUME_SYNC:=no}"                  # yes = Spotify volume slider <-> receiver master volume (both ways)
 : "${VOLUME_MAX:=50}"                   # receiver volume at 100 % in Spotify (hard limit for the slider)
@@ -223,6 +224,8 @@ swyh_stop() {
 }
 
 sctl() { as_user "$SOLOIST" ctl -D "$DATA" "$@" >/dev/null 2>&1; }
+# NET-menu events produced by our own start sequence must not count as NET presses
+net_mark() { amp_sent=$(date +%s); net_used=$(cut -d. -f1 /tmp/iscp-net 2>/dev/null || echo 0); net_used=${net_used:-0}; }
 
 # VOLUME_SYNC: the Spotify volume IS Soloist's PulseAudio stream volume - never touch it (that moves
 # the slider in the app). Instead the virtual output "dlna" gets the inverse gain (slider 50 % ->
@@ -254,7 +257,7 @@ watcher() {
   local status last="" idle_since now next_amp=0 tries=0 st ast ours json title artist album cover
   local meta="" shown="" amp_prev="" user_stop=0 stop_ts=0 net_ts play_seen=0
   local off_ts off_seen=0 off_hold=0 net_used=0 eof_ts play_ts active was_active=0
-  local svol sv_last="" amp_expect="" mvl_seen=0 mts mval v m quiet_since=0 comp_last=""
+  local svol sv_last="" amp_expect="" mvl_seen=0 mts mval v m quiet_since=0 comp_last="" amp_sent=0
   idle_since=$(date +%s)
   while kill -0 "$SOLOIST_PID" 2>/dev/null; do
     json=$(as_user "$SOLOIST" ctl -D "$DATA" now --json 2>/dev/null)
@@ -365,6 +368,25 @@ watcher() {
       fi
     fi
 
+    # --- NET_NEXT: NET while our stream plays -> next track ---
+    # The receiver reports NET (NLTF3 = NET top menu) only when its screen changes to the menu; the
+    # music keeps playing. The next track's SetAVTransportURI + Play brings the playback screen back,
+    # so the following NET press is reported again. Menu events caused by our own start sequence
+    # (SLI2B -> NET menu -> NSV000 -> Play) are ignored for a few seconds after each Play we send.
+    if [ "$REMOTE_CONTROL" = "yes" ] && [ "$NET_NEXT" = "yes" ] && [ "$user_stop" = 0 ] \
+       && [ "$status" = "playing" ] && [ "$ast" = "PLAYING OK" ] && [ -f /tmp/iscp-net ]; then
+      case "$st" in *"$STREAM_URL"*)
+        net_ts=$(cut -d. -f1 /tmp/iscp-net 2>/dev/null)
+        if [ -n "$net_ts" ] && [ "$net_ts" -gt "$net_used" ]; then
+          net_used=$net_ts
+          if [ "$net_ts" -gt $((amp_sent + 5)) ]; then
+            log "remote: NET during playback -> next track"
+            sctl next                  # the track change updates the display and the playback screen
+          fi
+        fi ;;
+      esac
+    fi
+
     # --- keep the output gain the inverse of the Spotify volume (full-level stream) ---
     if [ "$VOLUME_SYNC" = "yes" ] && [ -n "$svol" ] && [ "$svol" != "$comp_last" ]; then
       pa_comp "$svol"; comp_last=$svol
@@ -412,6 +434,7 @@ watcher() {
               if [ "$META_UPDATE" = "yes" ] && [ -n "$title" ] && [ "$meta" != "$shown" ]; then
                 log "new track: $title - $artist (updating the display)"
                 amp play "$STREAM_URL" "$title" "${artist:-$PLAY_TITLE}" "$album" "$cover" && { shown=$meta; amp_prev="PLAYING OK"; }
+                net_mark
                 next_amp=$(( $(date +%s) + 2 ))
               fi ;;
             "PLAYING "*) ;;                                      # something else is playing - leave it
@@ -431,6 +454,7 @@ watcher() {
                 else
                   amp_prev=""
                 fi
+                net_mark
                 next_amp=$(( $(date +%s) + 2 ))
               fi ;;
           esac
@@ -451,7 +475,7 @@ WATCH_PID=$!
 
 log "started: pulseaudio=$PA_PID soloist=$SOLOIST_PID proxy=$PROXY_PID eiscp=${ISCP_PID:-off} watcher=$WATCH_PID"
 log "receiver=$RENDERER_IP host=$HOST_IP stream=$STREAM_URL eiscp=$ONKYO_EISCP auto_power_on=$AUTO_POWER_ON remote=$REMOTE_CONTROL metadata=$META_UPDATE cover=$COVER_ART/$COVER_SIZE stream_allow=${STREAM_ALLOW:-anyone}"
-log "net_resume=${NET_RESUME_SECONDS}s volume_sync=$VOLUME_SYNC(max $VOLUME_MAX) power_on_volume=${POWER_ON_VOLUME:-keep} restore_input=$RESTORE_INPUT auto_power_off=${AUTO_POWER_OFF_MINUTES}min"
+log "net_resume=${NET_RESUME_SECONDS}s net_next=$NET_NEXT volume_sync=$VOLUME_SYNC(max $VOLUME_MAX) power_on_volume=${POWER_ON_VOLUME:-keep} restore_input=$RESTORE_INPUT auto_power_off=${AUTO_POWER_OFF_MINUTES}min"
 
 # If PulseAudio, Soloist or the proxy exits, exit too and let the restart policy restart
 # the container (this also fetches a fresh Soloist build after expiry, exit code 10).
