@@ -1,75 +1,47 @@
 # onkyo-dlna-bridge
 
-**English** | [Polski](README.pl.md)
+English | [Polski](README.pl.md)
 
 [![image](https://github.com/lisek84/onkyo-dlna-bridge/actions/workflows/image.yml/badge.svg)](https://github.com/lisek84/onkyo-dlna-bridge/actions/workflows/image.yml)
 
-**Play Spotify on network audio devices that have no (working) Spotify of their own** – any
-**DLNA/UPnP media renderer**: AV receivers, network players, smart TVs, Kodi … It was built for legacy
-**Onkyo network receivers** (2010–2013 era, e.g. TX-NR609), whose built-in Spotify stopped working when
-Spotify retired its old libspotify SDK – and on Onkyo / Integra devices it integrates most deeply.
+Spotify for audio gear that doesn't have a working Spotify of its own. A small container runs Spotify
+Soloist (Spotify's official headless client) and streams what it plays to a DLNA/UPnP renderer, so the
+device shows up in the Spotify app like any other speaker.
 
-A small container on your NAS, Raspberry Pi or Linux box runs **Spotify Soloist** — Spotify's own,
-official headless client — and streams its audio to the device's DLNA renderer. In the Spotify app you pick
-the device from the device list and it plays there, with title, artist, album and cover sent with every track.
+I wrote it for my Onkyo TX-NR609, whose built-in Spotify died together with libspotify, and that's where it
+works best: the receiver switches itself on, changes input, shows the track on its display and the cover on
+the TV, and reacts to a few buttons on the remote. Other DLNA renderers (receivers, network players, TVs,
+Kodi) should get the music and usually the track info, just without the Onkyo-specific parts. See
+[docs/compatibility.md](docs/compatibility.md).
 
-On **Onkyo / Integra** receivers (eISCP control) it additionally switches the receiver on and to the right
-input, shows the track on the front display and the cover on the TV, maps the remote's **Stop** / **NET** /
-power buttons, and can optionally sync the volume, restore the previous input and switch the receiver off
-again. On other devices you get playback and, usually, track info — see
-**[docs/compatibility.md](docs/compatibility.md)**.
+Not affiliated with or endorsed by Spotify or Onkyo. The receiver does not become a certified Spotify Connect
+device. Personal, non-commercial use only.
 
-> This is an independent hobby project. It is **not affiliated with, endorsed by or certified by Spotify**
-> (the receiver does not become a certified "Spotify Connect" device) **or Onkyo**. Personal, non-commercial
-> use only.
+<p align="center">
+  <img src="docs/images/receiver-display.jpg" alt="Onkyo TX-NR609 front display showing the current Spotify track and artist" width="49%">
+  <img src="docs/images/tv-osd-cover.jpg" alt="TV showing the receiver's DLNA screen with album cover, title, artist and album" width="37%">
+</p>
+<p align="center"><sub>Front display with the current track, and the receiver's on-screen display on the TV (over HDMI).</sub></p>
 
-## What it looks like
+## Background
 
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/images/receiver-display.jpg" alt="Onkyo TX-NR609 front display showing the current Spotify track and artist" width="100%"><br>
-      <sub><b>Receiver display</b> — track and artist from Spotify, input switched to NET automatically</sub>
-    </td>
-    <td align="center" width="50%">
-      <img src="docs/images/tv-osd-cover.jpg" alt="TV showing the receiver's DLNA screen with album cover, title, artist and album" width="75%"><br>
-      <sub><b>TV via the receiver's HDMI on-screen display</b> — album cover, title, elapsed time, artist and album</sub>
-    </td>
-  </tr>
-</table>
+The TX-NR609 is a perfectly good amplifier. It had Spotify in its NET menu until Spotify shut down
+libspotify, and Onkyo never shipped anything to replace it. The menu entry is still there; it just doesn't
+work. I didn't want to replace a working amplifier because of that.
 
-Pick the receiver in the Spotify app on your phone — it switches itself on, changes to the NET input and
-plays, showing what is playing on its own display and on the TV. Everything else (playlists, search,
-skipping) stays in the Spotify app you already use.
+I also didn't want to hack the receiver or use an unofficial Spotify client, so the project sticks to
+official pieces:
 
-No firmware modification, no hacks on the receiver: only its official network interfaces
-(UPnP/DLNA and the Onkyo eISCP control protocol) are used.
+- Spotify Soloist with your own developer key. It isn't bundled here; every install downloads it from
+  Spotify's CDN.
+- The receiver is controlled only through what it offers on the network anyway: its DLNA renderer and
+  Onkyo's eISCP protocol (the same one the Onkyo Remote app uses). The firmware isn't touched.
+- The audio stream is served only to your receiver (other clients are refused by default) and nothing is
+  recorded.
 
-## Why this project exists
+If you have an old receiver that lost its streaming services the same way, maybe this helps.
 
-*A personal note from the author.*
-
-My Onkyo TX-NR609 is a perfectly good amplifier. It had Spotify built in — until Spotify retired its old
-libspotify SDK and Onkyo simply stopped caring about receivers of that generation. No update, no
-replacement, nothing: the Spotify entry in the menu just quietly stopped working and was left there, dead.
-Thousands of good devices were downgraded overnight by a decision made somewhere else, and that annoyed me
-enough to do something about it.
-
-I wanted a solution that respects both the device and Spotify's rules, so this project deliberately uses
-only official building blocks:
-
-- It uses **Spotify Soloist, Spotify's own official client**, with your own developer API key — no
-  reverse-engineered Spotify client, no circumvention of anything.
-- Soloist is **not redistributed**; each installation downloads it from Spotify's official CDN, as Spotify asks.
-- The audio goes **only to your own receiver** in your home network (by default the stream is refused to any
-  other device) and is **never recorded or stored**.
-- The receiver is driven only through the **interfaces it officially offers** on the network (DLNA renderer
-  and Onkyo's eISCP control protocol). Its firmware is not touched.
-
-If you have an old receiver whose streaming features were abandoned the same way, I hope this gives it a
-second life too.
-
-## How it works, in short
+## How it works
 
 ```
  Spotify app ──Spotify Connect──►  Soloist ─► PulseAudio ─► swyh-rs ─► HTTP proxy ──DLNA/HTTP──► receiver
@@ -77,161 +49,144 @@ second life too.
                                     receiver control: UPnP AVTransport + eISCP (TCP 60128) ┘
 ```
 
-Details: [docs/how-it-works.md](docs/how-it-works.md). Technical reference of the receiver for developers: [docs/receiver-internals.md](docs/receiver-internals.md).
+Soloist plays into a virtual PulseAudio sink, swyh-rs turns that into a plain LPCM (44.1 kHz/16 bit) HTTP
+stream, and a small proxy serves it to the receiver in a way its old DLNA renderer accepts. A watcher script
+follows Soloist's state and drives the receiver: start playback, send title/artist/album/cover on every track
+change, pause when you press Stop, and so on.
 
-## Features
+More in [docs/how-it-works.md](docs/how-it-works.md). If you want to build on this, everything I found out
+about the receiver itself (chips, eISCP messages, DLNA quirks, which remote keys can be seen on the network)
+is in [docs/receiver-internals.md](docs/receiver-internals.md).
 
-**With any DLNA / UPnP renderer**
+## What works
 
-- Appears in the Spotify app's device list via the official **Spotify Soloist** client (no reverse-engineered client)
-- Lossless **LPCM 44.1 kHz / 16 bit** stream, served only to the configured renderer
-- **Title / artist / album** and **cover** sent with every track change (podcasts: show name)
-- Soloist is downloaded from Spotify's CDN at start and **auto-updated** (builds expire after 90 days)
+With any DLNA renderer: the device appears in the Spotify app, plays in LPCM, and gets title, artist, album
+and cover with every track (for podcasts, the show name). Soloist updates itself, which matters because its
+builds expire after 90 days.
 
-**Extras on Onkyo / Integra receivers (eISCP)**
+On Onkyo/Integra receivers, additionally:
 
-- **Powers the receiver on** and switches it to NET → DLNA when you start playback; track on the front
-  display, cover on the TV (receiver OSD via HDMI)
-- Remote: **Stop** pauses Spotify, **NET** resumes (optionally: next track during playback), **switching the
-  receiver off** pauses Spotify (optionally: hands playback back to the phone)
-- Optional: Spotify volume slider ↔ receiver volume, start-up volume, back to the previous input, automatic
-  standby
-- Works around the legacy DMR firmware quirks (UPnP 705 "Transport is locked", Range probing, metadata)
+- switches the receiver on and to NET/DLNA when you start playing;
+- Stop on the remote pauses Spotify, NET resumes it, switching the receiver off pauses it;
+- optional extras: NET as "next track" during playback, handing playback back to the phone when the
+  receiver is switched off, Spotify slider controlling the receiver volume, a start-up volume, switching back
+  to the previous input (e.g. TV) afterwards, and automatic standby.
 
-## Status / tested hardware
+Play, Pause, Next and Previous on the remote can't be used. In DLNA mode the receiver handles those keys
+internally and doesn't report them on the network (checked with both eISCP and UPnP).
 
-| Component | Tested |
-|---|---|
-| Receiver | **Onkyo TX-NR609** (2011) |
-| Host | **Synology DS718+** (x86_64, DSM 7.2, Container Manager) |
-| Other x86_64 Linux + Docker / Podman | expected to work (same image) |
-| Raspberry Pi / ARM (`Dockerfile.arm`) | **untested** – builds swyh-rs from source |
-| Windows (WSL2) | **experimental / untested** – see [docs/windows.md](docs/windows.md) |
+Tested so far: Onkyo TX-NR609 with a Synology DS718+ (x86_64, DSM 7.2, Container Manager). Other x86_64
+Linux hosts with Docker or Podman use the same image and should be fine. The ARM build (`Dockerfile.arm`,
+Raspberry Pi) and Windows/WSL2 ([docs/windows.md](docs/windows.md)) are untested. If you try it on other
+hardware, please open an [issue](https://github.com/lisek84/onkyo-dlna-bridge/issues) either way.
 
-DLNA renderers of other brands and other Onkyo / Integra receivers are expected to work — fully or
-partially, see [docs/compatibility.md](docs/compatibility.md) — but are untested so far. Reports (working or not) are welcome in the
-[issues](https://github.com/lisek84/onkyo-dlna-bridge/issues).
+## What you need
 
-## Requirements
+- A Spotify Soloist API key. It's free, but has to be created from a Premium account; after that, Free
+  accounts can play to the device too. See [docs/spotify-developer-key.md](docs/spotify-developer-key.md).
+- A Linux host (NAS, Raspberry Pi, anything) on the same LAN, with Docker or Podman and host networking.
+  It needs about 100 MB of RAM and runs on x86_64, arm64 and armv7.
+- The receiver on the network with a fixed IP and two settings checked:
+  [docs/receiver-setup.md](docs/receiver-setup.md).
+- The receiver must be able to connect to the host on TCP 5901 (`STREAM_PORT`), and mDNS (UDP 5353) has to
+  reach the host. A firewall silently blocking 5901 is the most common reason nothing plays; see
+  [docs/networking.md](docs/networking.md).
 
-- A free **Spotify Soloist API key**, created by a **Spotify Premium** account (once running, Free and Premium
-  users can play to it) → [docs/spotify-developer-key.md](docs/spotify-developer-key.md)
-- A host in the **same LAN** as the receiver with Docker or Podman, **host networking**, and ~100 MB RAM
-  (x86_64, arm64 or armv7; glibc-based image, Debian trixie)
-- The receiver with network enabled, a fixed IP, and two settings checked → [docs/receiver-setup.md](docs/receiver-setup.md)
-- **Firewall:** the receiver must be able to connect to the host on **TCP 5901** (`STREAM_PORT`), and mDNS
-  (UDP 5353) must reach the host → [docs/networking.md](docs/networking.md)
-
-## Quick start (Docker / Podman on Linux)
+## Setup
 
 ```bash
 git clone https://github.com/lisek84/onkyo-dlna-bridge.git
 cd onkyo-dlna-bridge
 cp soloist.env.example soloist.env
-nano soloist.env            # SOLOIST_API_KEY, RENDERER_IP, DEVICE_NAME, PUID/PGID
+nano soloist.env               # SOLOIST_API_KEY, RENDERER_IP, DEVICE_NAME, PUID/PGID
 docker compose up -d --build   # Raspberry Pi: set dockerfile: Dockerfile.arm in compose.yaml first
 docker compose logs -f
 ```
 
-Open Spotify on your phone → **Devices** → pick your `DEVICE_NAME` → play.
-The first connection logs Soloist into your account; afterwards it reconnects on its own.
+Then open Spotify on your phone, pick `DEVICE_NAME` from the device list and press play. The first time,
+Soloist logs in with the account that picked it; after that it reconnects by itself.
 
-**Prebuilt image (optional):** the GitHub Actions workflow publishes a multi-arch image (amd64, arm64) to
-`ghcr.io/lisek84/onkyo-dlna-bridge`. To use it instead of building locally, replace the `build:` block in
-`compose.yaml` with `image: ghcr.io/lisek84/onkyo-dlna-bridge:latest`.
+There's also a prebuilt image (amd64, arm64) at `ghcr.io/lisek84/onkyo-dlna-bridge`. To use it, replace the
+`build:` block in `compose.yaml` with `image: ghcr.io/lisek84/onkyo-dlna-bridge:latest`.
 
-Platform guides:
+Step-by-step guides: [Synology DSM](docs/synology.md), [Linux, Raspberry Pi, Podman/Quadlet](docs/linux.md),
+[Windows (WSL2)](docs/windows.md).
 
-- **Synology DSM** → [docs/synology.md](docs/synology.md)
-- **Linux, Raspberry Pi, Podman / Quadlet** → [docs/linux.md](docs/linux.md)
-- **Windows (WSL2)** → [docs/windows.md](docs/windows.md)
+## Settings
 
-## Configuration
+Everything is configured in `soloist.env`; [soloist.env.example](soloist.env.example) has comments for each
+option.
 
-All settings live in `soloist.env` (see [soloist.env.example](soloist.env.example) for full comments).
-
-| Variable | Default | Meaning |
+| Variable | Default | |
 |---|---|---|
-| `SOLOIST_API_KEY` | – (required) | Your Spotify Soloist API key |
-| `RENDERER_IP` | – (required) | IP of the receiver |
-| `DEVICE_NAME` | `Onkyo Receiver` | Name in the Spotify app |
-| `HOST_IP` | auto | LAN IP of the host (set it if the host has several networks) |
-| `PUID` / `PGID` | `1000` / `1000` | Owner of `./config` (Synology: typically `1026` / `100`) |
-| `STREAM_PORT` | `5901` | TCP port the receiver pulls audio from — **open it in the firewall** |
-| `STREAM_ALLOW` | `renderer` | Who may fetch the stream: `renderer` (only `RENDERER_IP`), a list of IPs/subnets, or empty (anyone in the LAN) |
-| `SWYH_PORT` | `5911` | Internal capture port (localhost only) |
-| `INITIAL_VOLUME` | `70` | Initial Spotify digital volume |
-| `META_UPDATE` | `yes` | Title/artist on the display (2–4 s gap at each track start); `no` = gapless, fixed `PLAY_TITLE` |
+| `SOLOIST_API_KEY` | (required) | Your Soloist API key |
+| `RENDERER_IP` | (required) | IP of the receiver |
+| `DEVICE_NAME` | `Onkyo Receiver` | Name shown in the Spotify app |
+| `HOST_IP` | auto | LAN IP of the host; set it if the host has several networks |
+| `PUID` / `PGID` | `1000` / `1000` | Owner of `./config` (Synology: usually `1026` / `100`) |
+| `STREAM_PORT` | `5901` | Port the receiver pulls the audio from; must be open in the firewall |
+| `STREAM_ALLOW` | `renderer` | Who may fetch the stream: `renderer` (only `RENDERER_IP`), a list of IPs/subnets, or empty for anyone |
+| `SWYH_PORT` | `5911` | Internal capture port, localhost only |
+| `INITIAL_VOLUME` | `70` | Initial Spotify volume |
+| `META_UPDATE` | `yes` | Send title/artist on every track (2–4 s gap at the start of each track); `no` = gapless, fixed `PLAY_TITLE` |
 | `PLAY_TITLE` | `Spotify` | Display text when no metadata is sent |
-| `COVER_ART` | `yes` | Send the album cover (shown on the TV through the receiver's on-screen display) |
-| `COVER_SIZE` | `default` | Cover size: `default` (300 px), `large` (640 px), `small` (64 px) |
-| `ONKYO_EISCP` | `yes` | Use the Onkyo eISCP protocol; `no` for non-Onkyo renderers |
-| `AUTO_POWER_ON` | `yes` | Power the receiver on when playback starts |
-| `REMOTE_CONTROL` | `yes` | Remote Stop → pause, NET → resume, power off → pause |
+| `COVER_ART` | `yes` | Send the album cover |
+| `COVER_SIZE` | `default` | `default` (300 px), `large` (640 px) or `small` (64 px) |
+| `ONKYO_EISCP` | `yes` | Use Onkyo's eISCP protocol; set `no` for other renderers |
+| `AUTO_POWER_ON` | `yes` | Switch the receiver on when playback starts |
+| `REMOTE_CONTROL` | `yes` | Stop pauses, NET resumes, power off pauses |
 | `NET_RESUME_SECONDS` | `120` | How long after Stop the NET button resumes (NET also opens the NET menu) |
-| `POWER_OFF_ACTION` | `pause` | Receiver switched off: `pause` Spotify, or `release` = pause and disconnect (the app goes back to the phone) |
-| `NET_NEXT` | `no` | `yes` = NET during playback skips to the next track (to open the NET menu, press Stop first) |
-| `VOLUME_SYNC` | `no` | Spotify volume slider ↔ receiver master volume, both ways |
-| `VOLUME_MAX` | `50` | Receiver volume at 100 % in Spotify (hard limit) |
-| `POWER_ON_VOLUME` | *(empty)* | Receiver volume set only when the container switches it on. **Empty = the receiver starts at its usual volume, as it always did** |
+| `NET_NEXT` | `no` | `yes`: NET during playback skips to the next track (press Stop first to use the NET menu) |
+| `POWER_OFF_ACTION` | `pause` | When the receiver is switched off: `pause`, or `release` to pause and disconnect so the phone takes over |
+| `VOLUME_SYNC` | `no` | Spotify volume slider and receiver volume follow each other |
+| `VOLUME_MAX` | `50` | Receiver volume that equals 100 % in Spotify (hard limit) |
+| `POWER_ON_VOLUME` | empty | Volume set when the container switches the receiver on; empty means the receiver keeps its usual volume |
 | `RESTORE_INPUT` | `no` | Switch back to the previous input (e.g. TV) when Spotify is done |
 | `AUTO_POWER_OFF_MINUTES` | `0` | Standby after N minutes without Spotify, if the container switched the receiver on |
 | `IDLE_STOP_SECONDS` | `300` | Stop streaming after this long paused |
 | `LOG_TO_FILE` | `yes` | Also log to `config/container.log` |
 
-**Volume options are independent of each other:**
-
-| You want | Settings |
-|---|---|
-| Leave the receiver's volume alone; the Spotify slider changes only the stream level (default) | `VOLUME_SYNC=no`, `POWER_ON_VOLUME=` |
-| Spotify slider controls the receiver, no start-up volume | `VOLUME_SYNC=yes`, `POWER_ON_VOLUME=` |
-| Only a fixed start-up volume | `VOLUME_SYNC=no`, `POWER_ON_VOLUME=35` |
-| Both | `VOLUME_SYNC=yes`, `POWER_ON_VOLUME=35` |
-
-With `POWER_ON_VOLUME` empty (or the line removed) the receiver switches on at whatever volume it had last – the
-container never changes it. A receiver that is already on is never changed either. With `VOLUME_SYNC=yes` the
-Spotify slider is aligned to the receiver's current volume when playback starts – only the slider moves, the
-receiver keeps its volume.
+The two volume options are independent. With neither set, the receiver's volume is left alone and the Spotify
+slider only changes the stream level. `POWER_ON_VOLUME` applies only when the container itself switches the
+receiver on from standby, and never to a receiver that's already on; leave it empty and the receiver starts at
+whatever volume it had last. With `VOLUME_SYNC=yes`, the Spotify slider is first moved to match the receiver's
+current volume (the receiver itself doesn't change), and from then on they follow each other.
 
 ## Using it
 
-| You do | What happens |
-|---|---|
-| Select the device in Spotify and press play | Receiver powers on, switches to NET → DLNA, plays (≈ 8–15 s) |
-| Skip / next track in the Spotify app | Plays on; the display shows the new title (`META_UPDATE=yes`) |
-| **Stop** on the receiver remote | Spotify pauses |
-| **NET** on the remote within 2 min after Stop | Spotify resumes (≈ 8 s until sound) |
-| **NET** during playback (with `NET_NEXT=yes`) | next track (≈ 3 s) |
-| Switch the receiver off | Spotify pauses; the receiver is **not** switched back on |
-| Volume on the remote / in Spotify | Remote = amplifier volume; Spotify slider = stream volume, or the amplifier volume with `VOLUME_SYNC=yes` |
+Pick the device in Spotify and press play; after 8 to 15 seconds the receiver is on, on NET, and playing.
+Skipping tracks happens in the Spotify app as usual, and the display follows. Stop on the remote pauses
+Spotify; NET within two minutes after that resumes it. Switching the receiver off pauses Spotify, and the
+container won't switch it back on. The remote's volume buttons control the amplifier; the Spotify slider
+controls the stream, or the amplifier if `VOLUME_SYNC=yes`.
 
-**Not possible:** Play/Pause/Next/Previous/FF on the receiver remote. In DLNA renderer mode these receivers
-handle those keys internally and do not report them over the network (verified with eISCP and UPnP).
-Use the Spotify app for skipping tracks.
+## Docs
 
-## Documentation
-
-- [Compatibility with other receivers and DLNA renderers](docs/compatibility.md)
-- [How it works](docs/how-it-works.md) — architecture and the legacy DMR quirks we work around
-- [Why Spotify Soloist (and not librespot/spotifyd/…)](docs/why-soloist.md)
-- [Getting a Spotify Soloist API key](docs/spotify-developer-key.md)
+- [Compatibility with other receivers and renderers](docs/compatibility.md)
+- [How it works](docs/how-it-works.md)
+- [Receiver internals (for developers)](docs/receiver-internals.md)
+- [Why Soloist and not librespot/spotifyd](docs/why-soloist.md)
+- [Getting a Soloist API key](docs/spotify-developer-key.md)
 - [Receiver setup](docs/receiver-setup.md)
-- [Networking & firewall](docs/networking.md)
+- [Networking and firewall](docs/networking.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
 ## Legal
 
-- This project is **not affiliated with, endorsed by, sponsored by, or certified by Spotify or Onkyo**.
-  "Spotify", "Spotify Connect", "Spotify Soloist" and "Onkyo" are trademarks of their respective owners and are
-  used here only to describe compatibility. No Spotify logos or brand assets are used.
-- **Personal, non-commercial use only**, as required by the Spotify developer terms. The project does not
-  record, store or share any Spotify content: audio is streamed live, only to your own receiver
-  (`STREAM_ALLOW=renderer` by default).
-- **Spotify Soloist is not distributed here.** The container downloads it from Spotify's official CDN at
-  runtime; its use is governed by the Spotify terms you accept when generating the API key
-  (see the [Spotify Soloist documentation](https://developer.spotify.com/documentation/soloist)).
-  Your API key is personal — do not share it.
-- **What the container image contains:** this project's scripts, Debian packages, and the
-  [swyh-rs](https://github.com/dheijl/swyh-rs) command-line binary (MIT © dheijl – its license is included in
-  the image at `/usr/share/doc/swyh-rs/LICENSE`). It does **not** contain Spotify Soloist.
-- The code in this repository is released under the [MIT License](LICENSE) © Lisek ([lisek84](https://github.com/lisek84)).
+Not affiliated with, endorsed, sponsored or certified by Spotify or Onkyo. "Spotify", "Spotify Connect",
+"Spotify Soloist" and "Onkyo" are trademarks of their owners and are used only to describe compatibility; no
+logos or brand assets are used.
+
+Personal, non-commercial use only, as the Spotify developer terms require. Audio is streamed live to your own
+receiver (`STREAM_ALLOW=renderer` by default) and is never recorded or stored.
+
+Spotify Soloist is not distributed with this project. The container downloads it from Spotify's CDN at
+runtime, and its use is covered by the terms you accept when you create the API key (see the
+[Soloist documentation](https://developer.spotify.com/documentation/soloist)). The key is personal; don't
+share it.
+
+The container image contains this project's scripts, Debian packages and the
+[swyh-rs](https://github.com/dheijl/swyh-rs) CLI binary (MIT © dheijl, license included at
+`/usr/share/doc/swyh-rs/LICENSE`). It does not contain Soloist.
+
+The code here is MIT licensed, © Lisek ([lisek84](https://github.com/lisek84)). See [LICENSE](LICENSE).
